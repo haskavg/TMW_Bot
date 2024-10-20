@@ -35,6 +35,8 @@ ADD_QUIZ_ATTEMPT = """INSERT INTO quiz_attempts (guild_id, user_id, quiz_name, c
 GET_LAST_QUIZ_ATTEMPT = """SELECT quiz_name, created_at FROM quiz_attempts 
                         WHERE guild_id = ? AND user_id = ? AND quiz_name = ? ORDER BY created_at DESC LIMIT 1;"""
 
+RESET_QUIZ_ATTEMPTS = """DELETE FROM quiz_attempts WHERE guild_id = ? AND user_id = ?"""
+
 ADD_PASSED_QUIZ = """INSERT INTO passed_quizzes (guild_id, user_id, quiz_name) VALUES (?,?,?)
                     ON CONFLICT(guild_id, user_id, quiz_name) DO NOTHING;"""
 
@@ -318,6 +320,14 @@ class LevelUp(commands.Cog):
         else:
             await message.channel.send(quiz_message)
             return
+
+    @discord.app_commands.command(name="reset_user_cooldown",  description="Reset a users quiz cooldown.")
+    @discord.app_commands.guild_only()
+    @discord.app_commands.describe(user="The user to clear the cooldown of.")
+    @discord.app_commands.default_permissions(administrator=True)
+    async def clear_user_cooldown(self, interaction: discord.Interaction, user: discord.Member):
+        await self.bot.RUN(RESET_QUIZ_ATTEMPTS, (interaction.guild.id, user.id))
+        await interaction.response.send_message(f"Cleared quiz cooldown for {user.mention}.")
 
 
 async def setup(bot):
