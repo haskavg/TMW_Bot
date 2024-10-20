@@ -1,6 +1,3 @@
-A bot.
-
-
 ### Acknowledgements
 This project may include code from the following open-source projects:
 
