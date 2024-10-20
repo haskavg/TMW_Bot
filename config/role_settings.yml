@@ -15,7 +15,7 @@ rank_structure:
         - 300
       score_limit: 25
       max_missed: 10
-      command: f"k!quiz jpdb1k(1-300) 25 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      command: "k!quiz jpdb1k(1-300) 25 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
 
     - name: "Trainee"
       combination_rank: false
@@ -147,18 +147,21 @@ rank_structure:
       decks: null
       quizzes_required: ["GN2", "Prima Idol Vocab"]
       rank_to_get: 1297383002694746177
+      command: null
 
     - name: "Divine Idol"
       combination_rank: true
       decks: null
       quizzes_required: ["GN1", "Divine Idol Vocab"]
       rank_to_get: 1297383002694746178
+      command: null
 
     - name: "Eternal Idol"
       combination_rank: true
       decks: null
       quizzes_required: ["GN1", "Eternal Idol Vocab"]
       rank_to_get: 1297383002694746179
+      command: null
 
 settings:
   1297383002610995272:

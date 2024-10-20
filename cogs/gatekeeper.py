@@ -21,8 +21,7 @@ CREATE_QUIZ_ATTEMPTS_TABLE = """
     guild_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     quiz_name TEXT NOT NULL,
-    created_at TIMESTAMP,
-    result INTEGER);"""
+    created_at TIMESTAMP);"""
 
 CREATE_PASSED_QUIZZES_TABLE = """
     CREATE TABLE IF NOT EXISTS passed_quizzes (
@@ -31,9 +30,9 @@ CREATE_PASSED_QUIZZES_TABLE = """
     quiz_name TEXT NOT NULL,
     PRIMARY KEY (guild_id, user_id, quiz_name));"""
 
-ADD_QUIZ_ATTEMPT = """INSERT INTO quiz_attempts (guild_id, user_id, quiz_name, created_at, result) VALUES (?,?,?,?,?);"""
+ADD_QUIZ_ATTEMPT = """INSERT INTO quiz_attempts (guild_id, user_id, quiz_name, created_at) VALUES (?,?,?,?);"""
 
-GET_LAST_QUIZ_ATTEMPT = """SELECT quiz_name, created_at, result FROM quiz_attempts 
+GET_LAST_QUIZ_ATTEMPT = """SELECT quiz_name, created_at FROM quiz_attempts 
                         WHERE guild_id = ? AND user_id = ? AND quiz_name = ? ORDER BY created_at DESC LIMIT 1;"""
 
 ADD_PASSED_QUIZ = """INSERT INTO passed_quizzes (guild_id, user_id, quiz_name) VALUES (?,?,?)
@@ -182,36 +181,67 @@ class LevelUp(commands.Cog):
         return None, False
 
     async def is_valid_quiz(self, message: discord.Message, rank_structure: dict):
-        quiz_commands = [quiz['command'] for quiz in rank_structure if quiz['combination_rank'] is False]
-        if message.content in quiz_commands:
-            return True
-        return False
+        for quiz in rank_structure:
+            if message.content == quiz['command']:
+                return True, quiz['name']
+        return False, None
 
     async def is_command_input_valid(self, message: discord.Message):
         if message.author.bot:
             return True
 
-        quiz_name, is_restricted = await self.is_restricted_quiz(message)
+        restricted_quiz_name, is_restricted = await self.is_restricted_quiz(message)
         is_in_levelup_channel = await self.is_in_levelup_channel(message)
-        is_valid_quiz = await self.is_valid_quiz(message, self.role_settings['rank_structure'][message.guild.id])
+        is_valid_quiz, performed_quiz_name = await self.is_valid_quiz(message, self.role_settings['rank_structure'][message.guild.id])
+
+        earned_ranks = await self.bot.GET(GET_PASSED_QUIZZES, (message.author.guild.id, message.author.id))
+        earned_ranks = [rank[0] for rank in earned_ranks]
+        if performed_quiz_name in earned_ranks:
+            return False
+
+        is_on_cooldown = await self.is_on_cooldown(message, performed_quiz_name)
+        if is_on_cooldown:
+            await timeout_member(message.author, 2, "Quiz on cooldown.")
+            return False
 
         if is_in_levelup_channel and not is_valid_quiz:
             await message.channel.send(f"{message.author.mention} Please use the exact quiz command in the level-up channel.")
-            await timeout_member(message.author, 2, "Invalid quiz attempt")
+            await timeout_member(message.author, 2, "Invalid quiz attempt.")
             return False
 
         if is_restricted:
             if not is_in_levelup_channel or not is_valid_quiz:
-                await message.channel.send(f"{message.author.mention} {quiz_name} quiz is restricted.\nYou can only use it in the level-up channel with the exact commands.")
-                await timeout_member(message.author, 2, "Restricted quiz attempt")
+                await message.channel.send(f"{message.author.mention} {restricted_quiz_name} quiz is restricted.\nYou can only use it in the level-up channel with the exact commands.")
+                await timeout_member(message.author, 2, "Restricted quiz attempt.")
                 return False
 
         if is_valid_quiz and not is_in_levelup_channel:
             await message.channel.send(f"{message.author.mention} Please use this quiz command in the level-up channels.")
-            await timeout_member(message.author, 2, "Invalid channel for quiz attempt")
+            await timeout_member(message.author, 2, "Invalid channel for quiz attempt.")
             return False
 
+        if is_valid_quiz and is_in_levelup_channel:
+            await self.register_quiz_attempt(message, performed_quiz_name)
+
         return True
+
+    async def is_on_cooldown(self, message: discord.Message, quiz_name):
+        last_attempt = await self.bot.GET_ONE(GET_LAST_QUIZ_ATTEMPT, (message.guild.id, message.author.id, quiz_name))
+        if not last_attempt:
+            return False
+        quiz_name, last_attempt_time = last_attempt
+        last_attempt_time = datetime.fromisoformat(last_attempt_time)
+        if last_attempt_time + timedelta(days=7) > utcnow():
+            next_attempt_time = last_attempt_time + timedelta(days=7)
+            unix_timestamp = int(next_attempt_time.timestamp())
+
+            await message.channel.send(
+                f"{message.author.mention} You can only attempt this quiz once every 7 days. Your next attempt will be available <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>).")
+            return True
+
+    async def register_quiz_attempt(self, message: discord.Message, quiz_name):
+        await self.bot.RUN(ADD_QUIZ_ATTEMPT, (message.guild.id, message.author.id, quiz_name, utcnow()))
+        await message.channel.send(f"{message.author.mention} registering attempt for {quiz_name}. You can try again in 7 days.")
 
     async def get_corresponding_quiz_data(self, message: discord.Message, quiz_result: dict):
         rank_structure = self.role_settings['rank_structure'][message.guild.id]
@@ -262,8 +292,8 @@ class LevelUp(commands.Cog):
         if not message.author.id == KOTOBA_BOT_ID and not 'k!q' in message.content.lower():
             return
 
-        valid_quiz = await self.is_command_input_valid(message)
-        if not valid_quiz:
+        is_valid_command = await self.is_command_input_valid(message)
+        if not is_valid_command:
             return
 
         quiz_id = await get_quiz_id(message)
