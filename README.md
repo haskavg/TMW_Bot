@@ -1,5 +1,5 @@
 ### Acknowledgements
-This project may or may not include code from the following open-source projects:
+This project may (or may not) include code from the following open-source projects:
 
 - **DJT-Discord Bot** - Unlicensed.
     - Original source: [https://github.com/friedrich-de/DJT-Discord-Bot](https://github.com/friedrich-de/DJT-Discord-Bot)
