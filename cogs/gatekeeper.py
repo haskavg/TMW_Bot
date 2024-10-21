@@ -4,10 +4,8 @@ import re
 import aiohttp
 import asyncio
 import yaml
-import aiosqlite
 from datetime import datetime, timedelta
 from discord.ext import commands
-from discord.ext import tasks
 from discord.utils import utcnow
 
 
