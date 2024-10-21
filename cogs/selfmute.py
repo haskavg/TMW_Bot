@@ -104,7 +104,7 @@ class Selfmute(commands.Cog):
             await interaction.response.send_message("You are now muted.", ephemeral=True)
             await interaction.channel.send(
                 f"**🔇 {interaction.user.mention} has been muted with {mute_role.mention} " +
-                f"until <t:{int(unmute_time.timestamp())}:F> which is in <t:{int(unmute_time.timestamp())}:R>. 🔇\n" +
+                f"until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>. 🔇\n" +
                 f"They had the following roles: " +
                 f"{', '.join([role.mention for role in interaction.user.roles if not role.is_default()])}**",
                 allowed_mentions=discord.AllowedMentions.none())
@@ -128,7 +128,7 @@ class Selfmute(commands.Cog):
         guild_id, user_id, mute_role_id, role_ids_to_restore, unmute_time = mute_data
         unmute_time = datetime.strptime(unmute_time, "%Y-%m-%d %H:%M:%S")
         if unmute_time > discord.utils.utcnow().replace(tzinfo=None):
-            await interaction.response.send_message(f"You are muted until <t:{int(unmute_time.timestamp())}:F> which is in <t:{int(unmute_time.timestamp())}:R>.", ephemeral=True)
+            await interaction.response.send_message(f"You are muted until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>.", ephemeral=True)
         else:
             announce_channel_id = selfmute_config.get(interaction.guild.id, {}).get("announce_channel")
             announce_channel = interaction.guild.get_channel(announce_channel_id)
