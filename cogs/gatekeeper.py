@@ -4,6 +4,7 @@ import re
 import aiohttp
 import asyncio
 import yaml
+import os
 from datetime import datetime, timedelta
 from discord.ext import commands
 from discord.utils import utcnow
@@ -328,6 +329,37 @@ class LevelUp(commands.Cog):
     async def clear_user_cooldown(self, interaction: discord.Interaction, user: discord.Member):
         await self.bot.RUN(RESET_QUIZ_ATTEMPTS, (interaction.guild.id, user.id))
         await interaction.response.send_message(f"Cleared quiz cooldown for {user.mention}.")
+
+    @discord.app_commands.command(name="ranktable",  description="Display the distribution of quiz roles in the server.")
+    @discord.app_commands.guild_only()
+    async def ranktable(self, interaction: discord.Interaction):
+        quiz_roles = await self.get_all_quiz_roles(interaction.guild)
+        description = "\n".join([f"{role.mention}: {len(role.members)} ({len(
+            role.members) / interaction.guild.member_count * 100:.2f}%)" for role in quiz_roles])
+
+        description += f"\n\nTotal member count: {interaction.guild.member_count}"
+
+        embed = discord.Embed(title=f"Role Distribution", description=description, color=discord.Color.blurple())
+        await interaction.response.send_message(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+
+    @discord.app_commands.command(name="rankusers", description="See all users with a specific role.")
+    @discord.app_commands.describe(role="Role for which all members should be displayed.")
+    @discord.app_commands.guild_only()
+    async def rankusers(self, interaction: discord.Interaction, role: discord.Role):
+        member_count = len(role.members)
+        mention_string = []
+        for member in role.members:
+            mention_string.append(member.mention)
+        if len(" ".join(mention_string)) < 500:
+            mention_string.append(f"\n\nA total {member_count} members have the role {role.mention}.")
+            await interaction.response.send_message(" ".join(mention_string), allowed_mentions=discord.AllowedMentions.none(), ephemeral=True)
+        else:
+            member_string = [str(member) for member in role.members]
+            member_string.append(f"\nTotal {member_count} members.")
+            with open("data/rank_user_count.txt", "w") as text_file:
+                text_file.write("\n".join(member_string))
+            await interaction.response.send_message("List of role members too large. Providing role member list in a file:", file=discord.File("data/rank_user_count.txt"), ephemeral=True)
+            os.remove("data/rank_user_count.txt")
 
 
 async def setup(bot):
