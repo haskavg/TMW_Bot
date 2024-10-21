@@ -194,11 +194,6 @@ class LevelUp(commands.Cog):
         is_in_levelup_channel = await self.is_in_levelup_channel(message)
         is_valid_quiz, performed_quiz_name = await self.is_valid_quiz(message, self.role_settings['rank_structure'][message.guild.id])
 
-        earned_ranks = await self.bot.GET(GET_PASSED_QUIZZES, (message.author.guild.id, message.author.id))
-        earned_ranks = [rank[0] for rank in earned_ranks]
-        if performed_quiz_name in earned_ranks:
-            return False
-
         is_on_cooldown = await self.is_on_cooldown(message, performed_quiz_name)
         if is_on_cooldown:
             await timeout_member(message.author, 2, "Quiz on cooldown.")
@@ -281,6 +276,10 @@ class LevelUp(commands.Cog):
                 roles = await self.get_all_quiz_roles(member.guild)
                 await member.remove_roles(*roles)
                 role_to_get = member.guild.get_role(rank['rank_to_get'])
+                all_rank_roles = await self.get_all_quiz_roles(member.guild)
+                assigned_rank_roles = [role for role in member.roles if role in all_rank_roles]
+                if all_rank_roles.index(role_to_get) <= all_rank_roles.index(assigned_rank_roles[0]):
+                    return
                 await member.add_roles(role_to_get)
                 announcement_channel = member.guild.get_channel(
                     self.role_settings['settings'][member.guild.id]['announce_channel'])
@@ -304,12 +303,15 @@ class LevelUp(commands.Cog):
         quiz_data = await self.get_corresponding_quiz_data(message, quiz_result)
         member = message.guild.get_member(int(quiz_result["participants"][0]["discordUser"]["id"]))
 
-        earned_ranks = await self.bot.GET(GET_PASSED_QUIZZES, (member.guild.id, member.id))
-        earned_ranks = [rank[0] for rank in earned_ranks]
-        if quiz_data['name'] in earned_ranks:
-            return
-
         success, quiz_message = await verify_quiz_settings(quiz_data, quiz_result, member)
+
+        role_to_get = member.guild.get_role(quiz_data['rank_to_get'])
+        if role_to_get:
+            all_rank_roles = await self.get_all_quiz_roles(member.guild)
+            assigned_rank_roles = [role for role in member.roles if role in all_rank_roles]
+            if all_rank_roles.index(role_to_get) <= all_rank_roles.index(assigned_rank_roles[0]):
+                return
+
         if success:
             announcement_channel = message.guild.get_channel(
                 self.role_settings['settings'][message.guild.id]['announce_channel'])
