@@ -13,8 +13,8 @@ from discord.utils import utcnow
 
 KOTOBA_BOT_ID = 251239170058616833
 
-ROLE_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
-with open(ROLE_SETTINGS_PATH, "r") as f:
+SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
+with open(SERVER_SETTINGS_PATH, "r") as f:
     server_settings = yaml.safe_load(f)
 
 CREATE_QUIZ_ATTEMPTS_TABLE = """
