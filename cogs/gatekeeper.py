@@ -34,7 +34,7 @@ CREATE_PASSED_QUIZZES_TABLE = """
 
 ADD_QUIZ_ATTEMPT = """INSERT INTO quiz_attempts (guild_id, user_id, quiz_name, created_at) VALUES (?,?,?,?);"""
 
-GET_LAST_QUIZ_ATTEMPT = """SELECT quiz_name, created_at FROM quiz_attempts 
+GET_LAST_QUIZ_ATTEMPT = """SELECT quiz_name, created_at FROM quiz_attempts
                         WHERE guild_id = ? AND user_id = ? AND quiz_name = ? ORDER BY created_at DESC LIMIT 1;"""
 
 RESET_QUIZ_ATTEMPTS = """DELETE FROM quiz_attempts WHERE guild_id = ? AND user_id = ?"""
@@ -258,6 +258,7 @@ class LevelUp(commands.Cog):
             role_to_get = member.guild.get_role(quiz_data['rank_to_get'])
             await member.remove_roles(*roles)
             await member.add_roles(role_to_get)
+            return role_to_get
         else:
             await self.check_if_combination_rank_earned(member)
 
@@ -270,25 +271,33 @@ class LevelUp(commands.Cog):
         combination_ranks.reverse()
         for rank in combination_ranks:
 
-            combination_role = member.guild.get_role(rank['rank_to_get'])
-            if combination_role in member.roles:
+            if await self.already_owns_higher_or_same_role(rank['rank_to_get'], member):
                 return
 
             if all(quiz_name in earned_ranks for quiz_name in rank['quizzes_required']):
-                roles = await self.get_all_quiz_roles(member.guild)
-                await member.remove_roles(*roles)
-                role_to_get = member.guild.get_role(rank['rank_to_get'])
-                all_rank_roles = await self.get_all_quiz_roles(member.guild)
-                assigned_rank_roles = [role for role in member.roles if role in all_rank_roles]
-                if all_rank_roles.index(role_to_get) <= all_rank_roles.index(assigned_rank_roles[0]):
-                    return
-                await member.add_roles(role_to_get)
-                announcement_channel = member.guild.get_channel(
-                    server_settings['rank_settings'][member.guild.id]['announce_channel'])
-                await announcement_channel.send(f"{member.mention} is now a {role_to_get.name}!")
-                return
+                role_to_get = await self.reward_user(member, rank)
+                await self.send_in_announcement_channel(member, f"{member.mention} is now a {role_to_get.name}!")
 
-    @commands.Cog.listener(name="on_message")
+    async def send_in_announcement_channel(self, member: discord.Member, message: str):
+        announcement_channel = member.guild.get_channel(
+            server_settings['rank_settings'][member.guild.id]['announce_channel'])
+        await announcement_channel.send(message)
+
+    async def already_owns_higher_or_same_role(self, rank_to_get: int, member: discord.Member):
+        rank_to_get = member.guild.get_role(rank_to_get)
+        if rank_to_get:
+            all_rank_roles = await self.get_all_quiz_roles(member.guild)
+            assigned_rank_roles = [role for role in member.roles if role in all_rank_roles]
+            if assigned_rank_roles and all_rank_roles.index(rank_to_get) <= all_rank_roles.index(assigned_rank_roles[0]):
+                return True
+        return False
+
+    async def already_passed_the_quiz(self, member: discord.Member, quiz_name: str):
+        passed_quizzes = await self.bot.GET(GET_PASSED_QUIZZES, (member.guild.id, member.id))
+        passed_quizzes = [quiz[0] for quiz in passed_quizzes]
+        return quiz_name in passed_quizzes
+
+    @ commands.Cog.listener(name="on_message")
     async def level_up_routine(self, message: discord.Message):
         if not message.author.id == KOTOBA_BOT_ID and not 'k!q' in message.content.lower():
             return
@@ -307,18 +316,13 @@ class LevelUp(commands.Cog):
 
         success, quiz_message = await verify_quiz_settings(quiz_data, quiz_result, member)
 
-        role_to_get = member.guild.get_role(quiz_data['rank_to_get'])
-        if role_to_get:
-            all_rank_roles = await self.get_all_quiz_roles(member.guild)
-            assigned_rank_roles = [role for role in member.roles if role in all_rank_roles]
-            if all_rank_roles.index(role_to_get) <= all_rank_roles.index(assigned_rank_roles[0]):
-                return
+        if await self.already_owns_higher_or_same_role(quiz_data['rank_to_get'], member):
+            return
 
         if success:
-            announcement_channel = message.guild.get_channel(
-                server_settings['rank_settings'][message.guild.id]['announce_channel'])
-            await announcement_channel.send(quiz_message)
             await self.reward_user(member, quiz_data)
+            if not self.already_passed_the_quiz(member, quiz_data['name']):
+                await self.send_in_announcement_channel(member, quiz_message)
         else:
             await message.channel.send(quiz_message)
             return
