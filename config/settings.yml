@@ -16,6 +16,7 @@ rank_structure:
       score_limit: 25
       max_missed: 10
       command: "k!quiz jpdb1k(1-300) 25 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      no_timeout: true
 
     - name: "Trainee"
       combination_rank: false
@@ -31,6 +32,7 @@ rank_structure:
       score_limit: 50
       max_missed: 10
       command: "k!quiz jpdb1k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      no_timeout: false
 
     - name: "Debut Idol"
       combination_rank: false
@@ -47,6 +49,7 @@ rank_structure:
       score_limit: 50
       max_missed: 10
       command: "k!quiz jpdb2_5k+jpdb5k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Major Idol"
       combination_rank: false
@@ -63,6 +66,7 @@ rank_structure:
       score_limit: 50
       max_missed: 10
       command: "k!quiz jpdb5k+jpdb10k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Prima Idol Vocab"
       combination_rank: false
@@ -79,6 +83,7 @@ rank_structure:
       score_limit: 50
       max_missed: 10
       command: "k!quiz jpdb10k+jpdb15k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Divine Idol Vocab"
       combination_rank: false
@@ -95,6 +100,7 @@ rank_structure:
       score_limit: 50
       max_missed: 10
       command: "k!quiz jpdb15k+jpdb20k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Eternal Idol Vocab"
       combination_rank: false
@@ -111,6 +117,7 @@ rank_structure:
       score_limit: 50
       max_missed: 10
       command: "k!quiz jpdb20k+jpdb25k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "GN2"
       combination_rank: false
@@ -126,6 +133,7 @@ rank_structure:
       score_limit: 20
       max_missed: 4
       command: "k!quiz gn2 nd 20 mmq=4"
+      no_timeout: false
 
     - name: "GN1"
       combination_rank: false
@@ -141,6 +149,7 @@ rank_structure:
       score_limit: 20
       max_missed: 4
       command: "k!quiz gn1 nd 20 mmq=4"
+      no_timeout: false
 
     - name: "Prima Idol"
       combination_rank: true
@@ -148,6 +157,7 @@ rank_structure:
       quizzes_required: ["GN2", "Prima Idol Vocab"]
       rank_to_get: 795699221365260359
       command: null
+      no_timeout: false
 
     - name: "Divine Idol"
       combination_rank: true
@@ -155,6 +165,7 @@ rank_structure:
       quizzes_required: ["GN1", "Divine Idol Vocab"]
       rank_to_get: 297395044963319809
       command: null
+      no_timeout: false
 
     - name: "Eternal Idol"
       combination_rank: true
@@ -162,6 +173,7 @@ rank_structure:
       quizzes_required: ["GN1", "Eternal Idol Vocab"]
       rank_to_get: 1026918224266280960
       command: null
+      no_timeout: false
 
   1297383002610995272: # Test_Guild
     - name: "Student"
@@ -180,6 +192,7 @@ rank_structure:
       score_limit: 1
       max_missed: 10
       command: "k!quiz n4(1-300) 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      no_timeout: true
 
     - name: "Trainee"
       combination_rank: false
@@ -195,6 +208,7 @@ rank_structure:
       score_limit: 1
       max_missed: 10
       command: "k!quiz n5 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      no_timeout: false
 
     - name: "Debut Idol"
       combination_rank: false
@@ -211,6 +225,7 @@ rank_structure:
       score_limit: 1
       max_missed: 10
       command: "k!quiz n5+n4 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Major Idol"
       combination_rank: false
@@ -227,6 +242,7 @@ rank_structure:
       score_limit: 1
       max_missed: 10
       command: "k!quiz n4+n3 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Prima Idol Vocab"
       combination_rank: false
@@ -243,6 +259,7 @@ rank_structure:
       score_limit: 1
       max_missed: 10
       command: "k!quiz n3+n2 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Divine Idol Vocab"
       combination_rank: false
@@ -259,6 +276,7 @@ rank_structure:
       score_limit: 1
       max_missed: 10
       command: "k!quiz n2+n1 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "Eternal Idol Vocab"
       combination_rank: false
@@ -275,6 +293,7 @@ rank_structure:
       score_limit: 1
       max_missed: 10
       command: "k!quiz n3+n1 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
 
     - name: "GN2"
       combination_rank: false
@@ -290,6 +309,7 @@ rank_structure:
       score_limit: 1
       max_missed: 4
       command: "k!quiz gn2 nd 1 mmq=4"
+      no_timeout: false
 
     - name: "GN1"
       combination_rank: false
@@ -305,6 +325,7 @@ rank_structure:
       score_limit: 1
       max_missed: 4
       command: "k!quiz gn1 nd 1 mmq=4"
+      no_timeout: false
 
     - name: "Prima Idol"
       combination_rank: true
@@ -312,6 +333,7 @@ rank_structure:
       quizzes_required: ["GN2", "Prima Idol Vocab"]
       rank_to_get: 1297383002694746177
       command: null
+      no_timeout: false
 
     - name: "Divine Idol"
       combination_rank: true
@@ -319,6 +341,7 @@ rank_structure:
       quizzes_required: ["GN1", "Divine Idol Vocab"]
       rank_to_get: 1297383002694746178
       command: null
+      no_timeout: false
 
     - name: "Eternal Idol"
       combination_rank: true
@@ -326,6 +349,7 @@ rank_structure:
       quizzes_required: ["GN1", "Eternal Idol Vocab"]
       rank_to_get: 1297383002694746179
       command: null
+      no_timeout: false
 
 rank_settings:
   617136488840429598: # TMW

@@ -37,12 +37,21 @@ ADD_QUIZ_ATTEMPT = """INSERT INTO quiz_attempts (guild_id, user_id, quiz_name, c
 GET_LAST_QUIZ_ATTEMPT = """SELECT quiz_name, created_at FROM quiz_attempts
                         WHERE guild_id = ? AND user_id = ? AND quiz_name = ? ORDER BY created_at DESC LIMIT 1;"""
 
-RESET_QUIZ_ATTEMPTS = """DELETE FROM quiz_attempts WHERE guild_id = ? AND user_id = ?"""
+RESET_ALL_QUIZ_ATTEMPTS = """DELETE FROM quiz_attempts WHERE guild_id = ? AND user_id = ?"""
+
+RESET_SPECIFIC_QUIZ_ATTEMPTS = """DELETE FROM quiz_attempts WHERE guild_id = ? AND user_id = ? AND quiz_name = ?"""
 
 ADD_PASSED_QUIZ = """INSERT INTO passed_quizzes (guild_id, user_id, quiz_name) VALUES (?,?,?)
                     ON CONFLICT(guild_id, user_id, quiz_name) DO NOTHING;"""
 
 GET_PASSED_QUIZZES = """SELECT quiz_name FROM passed_quizzes WHERE guild_id = ? AND user_id = ?;"""
+
+
+async def quiz_autocomplete(interaction: discord.Interaction, current_input: str):
+    rank_names = [quiz['name'] for quiz in server_settings['rank_structure']
+                  [interaction.guild.id] if quiz["combination_rank"] is False and quiz["no_timeout"] is False]
+    possible_choices = [discord.app_commands.Choice(name=rank_name, value=rank_name) for rank_name in rank_names]
+    return possible_choices[0:25]
 
 
 async def verify_quiz_settings(quiz_data, quiz_result, member: discord.Member):
@@ -188,6 +197,12 @@ class LevelUp(commands.Cog):
                 return True, quiz['name']
         return False, None
 
+    async def rank_has_cooldown(self, guild_id: int, rank_name: str):
+        rank_structure = server_settings['rank_structure'][guild_id]
+        for rank in rank_structure:
+            if rank['name'] == rank_name:
+                return not rank['no_timeout']
+
     async def is_command_input_valid(self, message: discord.Message):
         if message.author.bot:
             return True
@@ -218,7 +233,8 @@ class LevelUp(commands.Cog):
             return False
 
         if is_valid_quiz and is_in_levelup_channel:
-            await self.register_quiz_attempt(message, performed_quiz_name)
+            if await self.rank_has_cooldown(message.guild.id, performed_quiz_name):
+                await self.register_quiz_attempt(message, performed_quiz_name)
 
         return True
 
@@ -297,7 +313,7 @@ class LevelUp(commands.Cog):
         passed_quizzes = [quiz[0] for quiz in passed_quizzes]
         return quiz_name in passed_quizzes
 
-    @ commands.Cog.listener(name="on_message")
+    @commands.Cog.listener(name="on_message")
     async def level_up_routine(self, message: discord.Message):
         if not message.author.id == KOTOBA_BOT_ID and not 'k!q' in message.content.lower():
             return
@@ -329,11 +345,19 @@ class LevelUp(commands.Cog):
 
     @discord.app_commands.command(name="reset_user_cooldown",  description="Reset a users quiz cooldown.")
     @discord.app_commands.guild_only()
-    @discord.app_commands.describe(user="The user to clear the cooldown of.")
+    @discord.app_commands.describe(user="The user to clear the cooldown of.", quiz_to_reset="The quiz to reset the cooldown for.")
+    @discord.app_commands.autocomplete(quiz_to_reset=quiz_autocomplete)
     @discord.app_commands.default_permissions(administrator=True)
-    async def clear_user_cooldown(self, interaction: discord.Interaction, user: discord.Member):
-        await self.bot.RUN(RESET_QUIZ_ATTEMPTS, (interaction.guild.id, user.id))
-        await interaction.response.send_message(f"Cleared quiz cooldown for {user.mention}.")
+    async def clear_user_cooldown(self, interaction: discord.Interaction, user: discord.Member, quiz_to_reset: Optional[str]):
+        if not quiz_to_reset:
+            await self.bot.RUN(RESET_ALL_QUIZ_ATTEMPTS, (interaction.guild.id, user.id))
+            await interaction.response.send_message(f"Cleared all quiz cooldown for {user.mention}.")
+        else:
+            if not any(quiz_to_reset in rank['name'] for rank in server_settings['rank_structure'][interaction.guild.id]):
+                await interaction.response.send_message("Invalid quiz name.", ephemeral=True)
+                return
+            await self.bot.RUN(RESET_SPECIFIC_QUIZ_ATTEMPTS, (interaction.guild.id, user.id, quiz_to_reset))
+            await interaction.response.send_message(f"Cleared quiz cooldown for {user.mention} for `{quiz_to_reset}`.")
 
     @discord.app_commands.command(name="ranktable",  description="Display the distribution of quiz roles in the server.")
     @discord.app_commands.guild_only()
@@ -357,13 +381,13 @@ class LevelUp(commands.Cog):
             mention_string.append(member.mention)
         if len(" ".join(mention_string)) < 500:
             mention_string.append(f"\n\nA total {member_count} members have the role {role.mention}.")
-            await interaction.response.send_message(" ".join(mention_string), allowed_mentions=discord.AllowedMentions.none(), ephemeral=True)
+            await interaction.response.send_message(" ".join(mention_string), allowed_mentions=discord.AllowedMentions.none())
         else:
             member_string = [str(member) for member in role.members]
             member_string.append(f"\nTotal {member_count} members.")
             with open("data/rank_user_count.txt", "w") as text_file:
                 text_file.write("\n".join(member_string))
-            await interaction.response.send_message("List of role members too large. Providing role member list in a file:", file=discord.File("data/rank_user_count.txt"), ephemeral=True)
+            await interaction.response.send_message("List of role members too large. Providing role member list in a file:", file=discord.File("data/rank_user_count.txt"))
             os.remove("data/rank_user_count.txt")
 
     async def rank_to_get(self, guild_id: int, rank: dict):

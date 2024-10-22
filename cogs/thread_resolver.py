@@ -42,7 +42,7 @@ class Resolver(commands.Cog):
         if interaction.guild_id not in server_settings["help_channels"]:
             return await interaction.response.send_message("This server does not have any help channels set up.", ephemeral=True)
         if not isinstance(interaction.channel, discord.Thread):
-            await interaction.response.send_message("This command can only be used in a help thread.", ephemeral=True)
+            return await interaction.response.send_message("This command can only be used in a help thread.", ephemeral=True)
         question_forums = await self.get_guild_help_forums(interaction.guild_id)
         if interaction.channel.parent not in question_forums:
             return await interaction.response.send_message("This channel is not a help channel.", ephemeral=True)
