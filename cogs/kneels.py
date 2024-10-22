@@ -106,7 +106,7 @@ class Kneels(commands.Cog):
             return current_user_name
         else:
             async with FETCH_LOCK:
-                asyncio.sleep(1)
+                await asyncio.sleep(1)
                 user = await self.bot.fetch_user(user_id)
                 if user:
                     await self.bot.RUN(UPDATE_USERNAME_QUERY, (user.display_name, user_id))
@@ -121,19 +121,23 @@ class Kneels(commands.Cog):
             guild_id = int(guild_id)
         leaderboard_data = await self.bot.GET(GET_TOP_KNEELS_QUERY, (guild_id or interaction.guild.id,))
         if not leaderboard_data:
-            return await interaction.edit_original_response(content="No kneels found.")
+            return await interaction.edit_original_response(content="No kneels found for provided guild id.")
+
+        ikneel_emoji = discord.utils.get(interaction.guild.emojis, name="ikneel")
+        if not ikneel_emoji:
+            ikneel_emoji = "🧎"
 
         leaderboard_embed = discord.Embed(title="Kneel Leaderboard", color=discord.Color.blurple(), )
         for index, (user_id, user_name, kneel_score) in enumerate(leaderboard_data):
             user_name = await self.update_user_name(user_id, user_name)
             leaderboard_embed.add_field(name=f"**{index + 1}. {user_name}**",
-                                        value=f"{kneel_score}", inline=True)
+                                        value=f"{kneel_score} {ikneel_emoji}", inline=True)
 
         user_kneels = await self.bot.GET_ONE(GET_USER_KNEELS_QUERY, (guild_id or interaction.guild.id, interaction.user.id))
         try:
-            leaderboard_embed.add_field(name="Your Kneels", value=f"{user_kneels[0]}", inline=True)
+            leaderboard_embed.add_field(name="Your Kneels", value=f"{user_kneels[0]} {ikneel_emoji}", inline=True)
         except (TypeError, IndexError):
-            leaderboard_embed.add_field(name="Your Kneels", value="0", inline=True)
+            leaderboard_embed.add_field(name="Your Kneels", value=f"0 {ikneel_emoji}", inline=True)
 
         await interaction.edit_original_response(embed=leaderboard_embed)
 
