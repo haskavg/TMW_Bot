@@ -12,7 +12,9 @@ from discord.utils import utcnow
 
 KOTOBA_BOT_ID = 251239170058616833
 
-ROLE_SETTINGS_PATH = "config/role_settings.yml"
+ROLE_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
+with open(ROLE_SETTINGS_PATH, "r") as f:
+    server_settings = yaml.safe_load(f)
 
 CREATE_QUIZ_ATTEMPTS_TABLE = """
     CREATE TABLE IF NOT EXISTS quiz_attempts (
@@ -166,16 +168,14 @@ class LevelUp(commands.Cog):
     async def cog_load(self):
         await self.bot.RUN(CREATE_QUIZ_ATTEMPTS_TABLE)
         await self.bot.RUN(CREATE_PASSED_QUIZZES_TABLE)
-        with open(ROLE_SETTINGS_PATH, "r") as f:
-            self.role_settings = yaml.safe_load(f)
 
     async def is_in_levelup_channel(self, message: discord.Message):
-        channel_ids = self.role_settings['settings'][message.guild.id]['valid_levelup_channels']
+        channel_ids = server_settings['rank_settings'][message.guild.id]['valid_levelup_channels']
         channels = [message.guild.get_channel(channel_id) for channel_id in channel_ids]
         return message.channel in channels
 
     async def is_restricted_quiz(self, message: discord.Message):
-        restricted_quizzes = self.role_settings['settings'][message.guild.id]['restricted_quiz_names']
+        restricted_quizzes = server_settings['rank_settings'][message.guild.id]['restricted_quiz_names']
         for quiz_name in restricted_quizzes:
             if quiz_name.lower() in message.content.lower():
                 return quiz_name, True
@@ -193,7 +193,7 @@ class LevelUp(commands.Cog):
 
         restricted_quiz_name, is_restricted = await self.is_restricted_quiz(message)
         is_in_levelup_channel = await self.is_in_levelup_channel(message)
-        is_valid_quiz, performed_quiz_name = await self.is_valid_quiz(message, self.role_settings['rank_structure'][message.guild.id])
+        is_valid_quiz, performed_quiz_name = await self.is_valid_quiz(message, server_settings['rank_structure'][message.guild.id])
 
         is_on_cooldown = await self.is_on_cooldown(message, performed_quiz_name)
         if is_on_cooldown:
@@ -240,14 +240,14 @@ class LevelUp(commands.Cog):
         await message.channel.send(f"{message.author.mention} registering attempt for {quiz_name}. You can try again in 7 days.")
 
     async def get_corresponding_quiz_data(self, message: discord.Message, quiz_result: dict):
-        rank_structure = self.role_settings['rank_structure'][message.guild.id]
+        rank_structure = server_settings['rank_structure'][message.guild.id]
         deck_names = [deck['shortName'] for deck in quiz_result["decks"]]
         for rank in rank_structure:
             if set(rank['decks']) == set(deck_names):
                 return rank
 
     async def get_all_quiz_roles(self, guild: discord.Guild):
-        rank_structure = self.role_settings['rank_structure'][guild.id]
+        rank_structure = server_settings['rank_structure'][guild.id]
         return [guild.get_role(role['rank_to_get']) for role in rank_structure if role['rank_to_get']]
 
     async def reward_user(self, member: discord.Member, quiz_data: dict):
@@ -261,7 +261,7 @@ class LevelUp(commands.Cog):
             await self.check_if_combination_rank_earned(member)
 
     async def check_if_combination_rank_earned(self, member: discord.Member):
-        rank_structure = self.role_settings['rank_structure'][member.guild.id]
+        rank_structure = server_settings['rank_structure'][member.guild.id]
         combination_ranks = [rank_data for rank_data in rank_structure if rank_data['combination_rank'] is True]
         earned_ranks = await self.bot.GET(GET_PASSED_QUIZZES, (member.guild.id, member.id))
         earned_ranks = [rank[0] for rank in earned_ranks]
@@ -283,7 +283,7 @@ class LevelUp(commands.Cog):
                     return
                 await member.add_roles(role_to_get)
                 announcement_channel = member.guild.get_channel(
-                    self.role_settings['settings'][member.guild.id]['announce_channel'])
+                    server_settings['rank_settings'][member.guild.id]['announce_channel'])
                 await announcement_channel.send(f"{member.mention} is now a {role_to_get.name}!")
                 return
 
@@ -315,7 +315,7 @@ class LevelUp(commands.Cog):
 
         if success:
             announcement_channel = message.guild.get_channel(
-                self.role_settings['settings'][message.guild.id]['announce_channel'])
+                server_settings['rank_settings'][message.guild.id]['announce_channel'])
             await announcement_channel.send(quiz_message)
             await self.reward_user(member, quiz_data)
         else:
