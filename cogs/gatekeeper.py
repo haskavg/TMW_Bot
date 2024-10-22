@@ -5,6 +5,7 @@ import aiohttp
 import asyncio
 import yaml
 import os
+from typing import Optional
 from datetime import datetime, timedelta
 from discord.ext import commands
 from discord.utils import utcnow
@@ -360,6 +361,47 @@ class LevelUp(commands.Cog):
                 text_file.write("\n".join(member_string))
             await interaction.response.send_message("List of role members too large. Providing role member list in a file:", file=discord.File("data/rank_user_count.txt"), ephemeral=True)
             os.remove("data/rank_user_count.txt")
+
+    async def rank_to_get(self, guild_id: int, rank: dict):
+        guild = self.bot.get_guild(guild_id)
+        if not guild:
+            return "`Unretreivable`"
+        else:
+            return guild.get_role(rank['rank_to_get']).mention
+
+    @discord.app_commands.command(name="list_role_commands", description="List all commands required for the quizzes.")
+    @discord.app_commands.describe(guild_id="The guild for which to display the role commands.")
+    @discord.app_commands.guild_only()
+    async def list_role_commands(self, interaction: discord.Interaction, guild_id: Optional[str]):
+        if guild_id and not guild_id.isdigit():
+            await interaction.response.send("Invalid command input", ephemeral=True)
+        elif guild_id:
+            guild_id = int(guild_id)
+        else:
+            guild_id = interaction.guild.id
+
+        rank_structure = server_settings['rank_structure'][guild_id]
+
+        rank_command_embed = discord.Embed(title="Rank Commands", color=discord.Color.blurple())
+
+        guild = self.bot.get_guild(guild_id)
+        for rank in rank_structure:
+            if rank['command']:
+                if rank['rank_to_get']:
+                    rank_to_get = await self.rank_to_get(guild_id, rank)
+                    rank_command_embed.add_field(name=rank['name'], value=f"{rank['command']}\n" +
+                                                 f"Reward role: {rank_to_get}", inline=False)
+                else:
+                    rank_command_embed.add_field(name=rank['name'], value=rank['command'], inline=False)
+
+        for rank in rank_structure:
+            if rank['combination_rank']:
+                rank_to_get = await self.rank_to_get(guild_id, rank)
+                rank_command_embed.add_field(name=rank['name'],
+                                             value=f"Required quizzes: {', '.join(rank['quizzes_required'])}" +
+                                             f"\nReward role: {rank_to_get}", inline=False)
+
+        await interaction.response.send_message(embed=rank_command_embed, ephemeral=True)
 
 
 async def setup(bot):

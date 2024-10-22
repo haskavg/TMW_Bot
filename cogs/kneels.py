@@ -116,9 +116,11 @@ class Kneels(commands.Cog):
 
     @discord.app_commands.command(name="kneelderboard", description="ikneel")
     async def kneel_leaderboard(self, interaction: discord.Interaction, guild_id: Optional[str] = None):
-        await interaction.response.defer(thinking=f'Kneeling...')
-        if guild_id:
+        if guild_id and not guild_id.isdigit():
+            await interaction.response.send("Invalid command input", ephemeral=True)
+        elif guild_id:
             guild_id = int(guild_id)
+        await interaction.response.defer(thinking=f'Kneeling...')
         leaderboard_data = await self.bot.GET(GET_TOP_KNEELS_QUERY, (guild_id or interaction.guild.id,))
         if not leaderboard_data:
             return await interaction.edit_original_response(content="No kneels found for provided guild id.")
