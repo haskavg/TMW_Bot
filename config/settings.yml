@@ -401,3 +401,8 @@ help_channels:
     - 1081253736388755516 # newbie-questions
   1297383002610995272: # Test_Guild
     - 1298342342570409995
+
+immersion_bot:
+  allowed_log_channels:
+    - 814947177608118273
+    - 1297383003479081017
