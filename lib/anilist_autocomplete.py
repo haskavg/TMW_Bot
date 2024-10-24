@@ -163,11 +163,6 @@ async def anime_manga_name_autocomplete(interaction: discord.Interaction, curren
         return choices[:10]
 
 
-async def vn_name_autocomplete(interaction: discord.Interaction, current_input: str):
-    # TODO: VNDB API
-    return []
-
-
 async def listening_autocomplete(interaction: discord.Interaction, current_input: str):
     # TODO: TMDB API
     return []

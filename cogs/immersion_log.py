@@ -1,6 +1,8 @@
 from lib.bot import TMWBot
-from lib.anilist_autocomplete import anime_manga_name_autocomplete, vn_name_autocomplete, listening_autocomplete
+from lib.anilist_autocomplete import anime_manga_name_autocomplete, listening_autocomplete
+from lib.vndb_autocomplete import vn_name_autocomplete
 from lib.anilist_autocomplete import CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CREATE_ANILIST_INDEX_QUERY_1, CREATE_ANILIST_INDEX_QUERY_2
+from lib.vndb_autocomplete import CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CREATE_VNDB_INDEX_QUERY
 
 import discord
 import os
@@ -75,6 +77,8 @@ class ImmersionLog(commands.Cog):
         await self.bot.RUN(CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY)
         await self.bot.RUN(CREATE_ANILIST_INDEX_QUERY_1)
         await self.bot.RUN(CREATE_ANILIST_INDEX_QUERY_2)
+        await self.bot.RUN(CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY)
+        await self.bot.RUN(CREATE_VNDB_INDEX_QUERY)
 
     # TODO: (MAYBE) USE OPTIONAL FIELDS FOR API ACCESS -> ALL FIELDS SUPPORT API ACCESS
 
