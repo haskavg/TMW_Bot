@@ -44,6 +44,11 @@ WHERE (LOWER(REPLACE(title, ' ', '')) LIKE '%' || LOWER(REPLACE(?, ' ', '')) || 
 LIMIT 10;
 """
 
+CACHED_TMDB_THUMBNAIL_QUERY = """
+SELECT poster_path FROM cached_tmdb_results
+WHERE tmdb_id = ?;
+"""
+
 
 async def query_tmdb(interaction: discord.Interaction, current_input: str, bot: TMWBot):
     api_key = os.getenv("TMDB_API_KEY")

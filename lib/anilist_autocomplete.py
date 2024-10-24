@@ -79,6 +79,11 @@ SELECT anilist_id, title_english, title_native, cover_image_url FROM cached_anil
 WHERE anilist_id = ? AND media_type = ?;
 """
 
+CACHED_ANILIST_THUMBNAIL_QUERY = """
+SELECT cover_image_url FROM cached_anilist_results
+WHERE anilist_id = ?;
+"""
+
 
 async def query_anilist(interaction: discord.Interaction, current_input: str, bot: TMWBot):
     url = "https://graphql.anilist.co"

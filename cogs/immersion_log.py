@@ -1,7 +1,7 @@
 from lib.bot import TMWBot
-from lib.anilist_autocomplete import anime_manga_name_autocomplete, CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CREATE_ANILIST_INDEX_QUERY_1, CREATE_ANILIST_INDEX_QUERY_2
-from lib.vndb_autocomplete import vn_name_autocomplete, CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CREATE_VNDB_INDEX_QUERY
-from lib.tmdb_autocomplete import listening_autocomplete, CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CREATE_TMDB_INDEX_QUERY_1, CREATE_TMDB_INDEX_QUERY_2
+from lib.anilist_autocomplete import anime_manga_name_autocomplete, CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CREATE_ANILIST_INDEX_QUERY_1, CREATE_ANILIST_INDEX_QUERY_2, CACHED_ANILIST_THUMBNAIL_QUERY
+from lib.vndb_autocomplete import vn_name_autocomplete, CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CREATE_VNDB_INDEX_QUERY, CACHED_VNDB_THUMBNAIL_QUERY
+from lib.tmdb_autocomplete import listening_autocomplete, CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CREATE_TMDB_INDEX_QUERY_1, CREATE_TMDB_INDEX_QUERY_2, CACHED_TMDB_THUMBNAIL_QUERY
 
 import discord
 import os
@@ -46,13 +46,13 @@ async def log_name_autocomplete(interaction: discord.Interaction, current_input:
     return []
 
 MEDIA_TYPES = {
-    "Visual Novel": {"log_name": "Visual Novel (in characters read)", "short_id": "VN", "max_logged": 2000000, "autocomplete": vn_name_autocomplete, "points_multiplier": 0.0028571428571429},
-    "Manga": {"log_name": "Manga (in pages read)", "short_id": "MANGA", "max_logged": 1000, "autocomplete": anime_manga_name_autocomplete, "points_multiplier": 0.125},
-    "Anime": {"log_name": "Anime (in episodes watched)", "short_id": "ANIME", "max_logged": 100, "autocomplete": anime_manga_name_autocomplete, "points_multiplier": 13.0},
-    "Book": {"log_name": "Book (in pages read)", "short_id": "BOOK", "max_logged": 500, "autocomplete": None, "points_multiplier": 1},
-    "Reading Time": {"log_name": "Reading Time (in minutes)", "short_id": "RT", "max_logged": 420, "autocomplete": None, "points_multiplier": 0.67},
-    "Listening Time": {"log_name": "Listening Time (in minutes)", "short_id": "LT", "max_logged": 420, "autocomplete": listening_autocomplete, "points_multiplier": 0.67},
-    "Reading": {"log_name": "Reading (in characters read)", "short_id": "READING", "max_logged": 2000000, "autocomplete": None, "points_multiplier": 0.0028571428571429},
+    "Visual Novel": {"log_name": "Visual Novel (in characters read)", "short_id": "VN", "max_logged": 2000000, "autocomplete": vn_name_autocomplete, "points_multiplier": 0.0028571428571429, "thumbnail_query": CACHED_VNDB_THUMBNAIL_QUERY},
+    "Manga": {"log_name": "Manga (in pages read)", "short_id": "MANGA", "max_logged": 1000, "autocomplete": anime_manga_name_autocomplete, "points_multiplier": 0.125, "thumbnail_query": CACHED_ANILIST_THUMBNAIL_QUERY},
+    "Anime": {"log_name": "Anime (in episodes watched)", "short_id": "ANIME", "max_logged": 100, "autocomplete": anime_manga_name_autocomplete, "points_multiplier": 13.0, "thumbnail_query": CACHED_ANILIST_THUMBNAIL_QUERY},
+    "Book": {"log_name": "Book (in pages read)", "short_id": "BOOK", "max_logged": 500, "autocomplete": None, "points_multiplier": 1, "thumbnail_query": None},
+    "Reading Time": {"log_name": "Reading Time (in minutes)", "short_id": "RT", "max_logged": 420, "autocomplete": None, "points_multiplier": 0.67, "thumbnail_query": None},
+    "Listening Time": {"log_name": "Listening Time (in minutes)", "short_id": "LT", "max_logged": 420, "autocomplete": listening_autocomplete, "points_multiplier": 0.67, "thumbnail_query": CACHED_TMDB_THUMBNAIL_QUERY},
+    "Reading": {"log_name": "Reading (in characters read)", "short_id": "READING", "max_logged": 2000000, "autocomplete": None, "points_multiplier": 0.0028571428571429, "thumbnail_query": None},
 }
 
 LOG_CHOICES = [discord.app_commands.Choice(

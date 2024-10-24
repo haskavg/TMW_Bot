@@ -47,6 +47,11 @@ SELECT vndb_id, title, cover_image_url FROM cached_vndb_results
 WHERE vndb_id = ?;
 """
 
+CACHED_VNDB_THUMBNAIL_QUERY = """
+SELECT cover_image_url FROM cached_vndb_results
+WHERE vndb_id = ?;
+"""
+
 
 async def query_vndb(interaction: discord.Interaction, current_input: str, bot: TMWBot):
     url = "https://api.vndb.org/kana/vn"
