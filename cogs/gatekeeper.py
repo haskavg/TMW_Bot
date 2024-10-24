@@ -283,7 +283,6 @@ class LevelUp(commands.Cog):
         combination_ranks = [rank_data for rank_data in rank_structure if rank_data['combination_rank'] is True]
         earned_ranks = await self.bot.GET(GET_PASSED_QUIZZES, (member.guild.id, member.id))
         earned_ranks = [rank[0] for rank in earned_ranks]
-        # Reverse for correct hierarchy.
         combination_ranks.reverse()
         for rank in combination_ranks:
 
@@ -337,7 +336,6 @@ class LevelUp(commands.Cog):
 
         if success:
             await self.reward_user(member, quiz_data)
-            # if not self.already_passed_the_quiz(member, quiz_data['name']):
             await self.send_in_announcement_channel(member, quiz_message)
         else:
             await message.channel.send(quiz_message)
@@ -412,7 +410,6 @@ class LevelUp(commands.Cog):
 
         rank_command_embed = discord.Embed(title="Rank Commands", color=discord.Color.blurple())
 
-        guild = self.bot.get_guild(guild_id)
         for rank in rank_structure:
             if rank['command']:
                 if rank['rank_to_get']:

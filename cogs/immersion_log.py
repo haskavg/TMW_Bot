@@ -1,4 +1,7 @@
 from lib.bot import TMWBot
+from lib.anilist_autocomplete import anime_manga_name_autocomplete, vn_name_autocomplete, listening_autocomplete
+from lib.anilist_autocomplete import CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CREATE_ANILIST_INDEX_QUERY_1, CREATE_ANILIST_INDEX_QUERY_2
+
 import discord
 import os
 import yaml
@@ -6,6 +9,7 @@ from typing import Optional
 from datetime import timedelta, datetime
 from discord.ext import commands
 from discord.ext import tasks
+
 
 SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
 with open(SERVER_SETTINGS_PATH, "r") as f:
@@ -28,25 +32,16 @@ CREATE_LOG_QUERY = """
     VALUES (?, ?, ?, ?, ?, ?, ?);"""
 
 
-async def anime_manga_name_autocomplete(interaction: discord.Interaction, current_input: str):
-    # TODO: AniList API
-    pass
-
-
-async def vn_name_autocomplete(interaction: discord.Interaction, current_input: str):
-    # TODO: VNDB API
-    pass
-
-
-async def listening_autocomplete(interaction: discord.Interaction, current_input: str):
-    # TODO: TMDB API
-    pass
-
-
 async def log_name_autocomplete(interaction: discord.Interaction, current_input: str):
+    current_input = current_input.strip()
+    if not current_input:
+        return []
+    if len(current_input) <= 1:
+        return []
     media_type = interaction.namespace['media_type']
     if MEDIA_TYPES[media_type]['autocomplete']:
-        return await MEDIA_TYPES[media_type]['autocomplete'](interaction, current_input)
+        result = await MEDIA_TYPES[media_type]['autocomplete'](interaction, current_input)
+        return result
     return []
 
 MEDIA_TYPES = {
@@ -77,6 +72,9 @@ class ImmersionLog(commands.Cog):
 
     async def cog_load(self):
         await self.bot.RUN(CREATE_LOGS_TABLE)
+        await self.bot.RUN(CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY)
+        await self.bot.RUN(CREATE_ANILIST_INDEX_QUERY_1)
+        await self.bot.RUN(CREATE_ANILIST_INDEX_QUERY_2)
 
     # TODO: (MAYBE) USE OPTIONAL FIELDS FOR API ACCESS -> ALL FIELDS SUPPORT API ACCESS
 
@@ -84,11 +82,12 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.describe(
         media_type='The type of media you are logging.',
         amount='Amount. For time-based logs, use the number of minutes.',
-        name='You can use VNDB ID/Titles and AniList ID/Titles, or provide free text.',
+        name='You can use VNDB ID for VNs, AniList ID for Anime/Manga, TMDB ID for Listening or provide free text.',
         comment='Short comment about your log.',
         backfill_date='The date for the log, in YYYY-MM-DD format. You can log no more than 7 days into the past.'
     )
     @discord.app_commands.choices(media_type=LOG_CHOICES)
+    @discord.app_commands.autocomplete(name=log_name_autocomplete)
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str], backfill_date: Optional[str]):
         if not is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
