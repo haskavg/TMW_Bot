@@ -83,7 +83,6 @@ async def query_vndb(interaction: discord.Interaction, current_input: str, bot: 
 
                     await bot.RUN(CACHED_VNDB_RESULTS_INSERT_QUERY, (vndb_id, title, cover_image_url))
 
-                print(f"INPUT: {current_input}\n\tAPI: {len(choices)} \t\t ")
                 return choices[:10]
             elif response.status == 429:
                 retry_after = int(response.headers.get("Retry-After", 60))
@@ -115,9 +114,7 @@ async def vn_name_autocomplete(interaction: discord.Interaction, current_input: 
             choice_name = f"{title[:80]} (ID: {vndb_id})"
             choices.append(discord.app_commands.Choice(name=choice_name, value=str(vndb_id)))
 
-        print(f"INPUT: {current_input}\n\tCACHE: {len(choices)} \t\t ")
         if len(choices) < 3:
-            print("CACHE FAILED; FETCHING FROM API")
             vndb_choices = await query_vndb(interaction, current_input, tmw_bot)
             choices.extend(vndb_choices)
 

@@ -1,8 +1,7 @@
 from lib.bot import TMWBot
-from lib.anilist_autocomplete import anime_manga_name_autocomplete, listening_autocomplete
-from lib.vndb_autocomplete import vn_name_autocomplete
-from lib.anilist_autocomplete import CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CREATE_ANILIST_INDEX_QUERY_1, CREATE_ANILIST_INDEX_QUERY_2
-from lib.vndb_autocomplete import CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CREATE_VNDB_INDEX_QUERY
+from lib.anilist_autocomplete import anime_manga_name_autocomplete, CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CREATE_ANILIST_INDEX_QUERY_1, CREATE_ANILIST_INDEX_QUERY_2
+from lib.vndb_autocomplete import vn_name_autocomplete, CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CREATE_VNDB_INDEX_QUERY
+from lib.tmdb_autocomplete import listening_autocomplete, CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CREATE_TMDB_INDEX_QUERY_1, CREATE_TMDB_INDEX_QUERY_2
 
 import discord
 import os
@@ -79,14 +78,15 @@ class ImmersionLog(commands.Cog):
         await self.bot.RUN(CREATE_ANILIST_INDEX_QUERY_2)
         await self.bot.RUN(CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY)
         await self.bot.RUN(CREATE_VNDB_INDEX_QUERY)
-
-    # TODO: (MAYBE) USE OPTIONAL FIELDS FOR API ACCESS -> ALL FIELDS SUPPORT API ACCESS
+        await self.bot.RUN(CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY)
+        await self.bot.RUN(CREATE_TMDB_INDEX_QUERY_1)
+        await self.bot.RUN(CREATE_TMDB_INDEX_QUERY_2)
 
     @discord.app_commands.command(name='log', description='Log your immersion!')
     @discord.app_commands.describe(
         media_type='The type of media you are logging.',
         amount='Amount. For time-based logs, use the number of minutes.',
-        name='You can use VNDB ID for VNs, AniList ID for Anime/Manga, TMDB ID for Listening or provide free text.',
+        name='You can use VNDB ID/Title for VNs, AniList ID/Titlefor Anime/Manga, TMDB titles for Listening or provide free text.',
         comment='Short comment about your log.',
         backfill_date='The date for the log, in YYYY-MM-DD format. You can log no more than 7 days into the past.'
     )
@@ -123,9 +123,6 @@ class ImmersionLog(commands.Cog):
 
         await interaction.response.defer()
 
-        # TODO: IF API ACCESS, SAVE RESPONSE DATA
-
-        # Restrict to two decimal places
         points_received = round(amount * MEDIA_TYPES[media_type]['points_multiplier'], 2)
 
         # TODO: CHECK IF GOALS FULFILLED
