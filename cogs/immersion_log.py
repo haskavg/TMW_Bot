@@ -6,6 +6,7 @@ from lib.tmdb_autocomplete import listening_autocomplete, CACHED_TMDB_RESULTS_CR
 import discord
 import os
 import yaml
+import random
 from typing import Optional
 from datetime import timedelta, datetime
 from discord.ext import commands
@@ -38,6 +39,12 @@ GET_CONSECUTIVE_DAYS_QUERY = """
     WHERE user_id = ?
     GROUP BY log_date
     ORDER BY log_date DESC;
+"""
+
+GET_POINTS_FOR_CURRENT_MONTH_QUERY = """
+    SELECT SUM(points_received) AS total_points
+    FROM logs
+    WHERE user_id = ? AND strftime('%Y-%m', log_date) = strftime('%Y-%m', 'now');
 """
 
 
@@ -135,15 +142,19 @@ class ImmersionLog(commands.Cog):
 
         # TODO: CHECK IF GOALS FULFILLED
 
-        # TODO: CHECK IF ACHIEVEMENTS UNLOCKED
+        points_before = await self.get_points_for_current_month(interaction.user.id)
 
         await self.bot.RUN(
             CREATE_LOG_QUERY,
             (interaction.user.id, media_type, name, comment, amount, points_received, log_date)
         )
 
-        # TODO: CREATE NICE EMBED FOR LOGS
+        points_after = await self.get_points_for_current_month(interaction.user.id)
 
+        # TODO: CREATE NICE EMBED FOR LOGS
+        print(points_before, points_after)
+
+        random_guild_emoji = random.choice(interaction.guild.emojis)
         consecutive_days = await self.get_consecutive_days_logged(interaction.user.id)
 
         await interaction.followup.send("Your log has been recorded successfully!", ephemeral=True)
@@ -164,6 +175,12 @@ class ImmersionLog(commands.Cog):
                 break
 
         return consecutive_days
+
+    async def get_points_for_current_month(self, user_id: int) -> float:
+        result = await self.bot.GET(GET_POINTS_FOR_CURRENT_MONTH_QUERY, (user_id,))
+        if result and result[0] is not None:
+            return result[0][0]
+        return 0.0
 
 
 async def setup(bot):
