@@ -32,6 +32,14 @@ CREATE_LOG_QUERY = """
     INSERT INTO logs (user_id, media_type, media_name, comment, amount_logged, points_received, log_date)
     VALUES (?, ?, ?, ?, ?, ?, ?);"""
 
+GET_CONSECUTIVE_DAYS_QUERY = """
+    SELECT log_date
+    FROM logs
+    WHERE user_id = ?
+    GROUP BY log_date
+    ORDER BY log_date DESC;
+"""
+
 
 async def log_name_autocomplete(interaction: discord.Interaction, current_input: str):
     current_input = current_input.strip()
@@ -136,7 +144,26 @@ class ImmersionLog(commands.Cog):
 
         # TODO: CREATE NICE EMBED FOR LOGS
 
+        consecutive_days = await self.get_consecutive_days_logged(interaction.user.id)
+
         await interaction.followup.send("Your log has been recorded successfully!", ephemeral=True)
+
+    async def get_consecutive_days_logged(self, user_id: int) -> int:
+        result = await self.bot.GET(GET_CONSECUTIVE_DAYS_QUERY, (user_id,))
+        if not result:
+            return 0
+
+        consecutive_days = 0
+        today = discord.utils.utcnow().date()
+
+        for row in result:
+            log_date = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S').date()
+            if log_date == today - timedelta(days=consecutive_days):
+                consecutive_days += 1
+            else:
+                break
+
+        return consecutive_days
 
 
 async def setup(bot):

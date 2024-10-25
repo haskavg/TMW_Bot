@@ -65,6 +65,7 @@ ON CONFLICT(anilist_id) DO UPDATE SET
     timestamp=CURRENT_TIMESTAMP;
 """
 
+# TODO: Optimize for efficient search
 CACHED_ANILIST_RESULTS_SEARCH_QUERY = """
 SELECT anilist_id, title_english, title_native, cover_image_url 
 FROM cached_anilist_results 

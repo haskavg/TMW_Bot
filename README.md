@@ -1,5 +1,9 @@
 [![Deploy Discord Bot](https://github.com/friedrich-de/TMW_Bot/actions/workflows/main.yml/badge.svg)](https://github.com/friedrich-de/TMW_Bot/actions/workflows/main.yml)
 
+
+### General ToDo
+- Clubs
+- Bookmarker
 ### Acknowledgements
 This bot is based on the following project (mostly used as a feature reference without or minimal direct code reuse):
 

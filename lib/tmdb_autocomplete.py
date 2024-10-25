@@ -36,6 +36,7 @@ ON CONFLICT(tmdb_id) DO UPDATE SET
     timestamp=CURRENT_TIMESTAMP;
 """
 
+# TODO: Optimize for efficient search
 CACHED_TMDB_RESULTS_SEARCH_QUERY = """
 SELECT tmdb_id, title, original_title, poster_path, media_type
 FROM cached_tmdb_results

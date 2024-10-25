@@ -5,13 +5,6 @@ from discord.ext import tasks
 
 from lib.bot import TMWBot
 
-VNDB_QUERY = """
-{
-    "filters": ["search", "=", "{search}"],
-    "fields": "title, image.url"
-}
-"""
-
 CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY = """
 CREATE TABLE IF NOT EXISTS cached_vndb_results (
     primary_key INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,6 +28,7 @@ ON CONFLICT(vndb_id) DO UPDATE SET
     timestamp=CURRENT_TIMESTAMP;
 """
 
+# TODO: Optimize for efficient search
 CACHED_VNDB_RESULTS_SEARCH_QUERY = """
 SELECT vndb_id, title, cover_image_url 
 FROM cached_vndb_results 
