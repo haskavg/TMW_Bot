@@ -1,7 +1,7 @@
 from lib.bot import TMWBot
-from lib.anilist_autocomplete import anime_manga_name_autocomplete, CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CREATE_ANILIST_INDEX_QUERY_1, CREATE_ANILIST_INDEX_QUERY_2, CACHED_ANILIST_THUMBNAIL_QUERY
-from lib.vndb_autocomplete import vn_name_autocomplete, CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CREATE_VNDB_INDEX_QUERY, CACHED_VNDB_THUMBNAIL_QUERY
-from lib.tmdb_autocomplete import listening_autocomplete, CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CREATE_TMDB_INDEX_QUERY_1, CREATE_TMDB_INDEX_QUERY_2, CACHED_TMDB_THUMBNAIL_QUERY
+from lib.anilist_autocomplete import anime_manga_name_autocomplete, CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, CACHED_ANILIST_THUMBNAIL_QUERY, CACHED_ANILIST_TITLE_QUERY, CREATE_ANILIST_FTS5_TABLE_QUERY, CREATE_ANILIST_TRIGGER_DELETE, CREATE_ANILIST_TRIGGER_INSERT, CREATE_ANILIST_TRIGGER_UPDATE
+from lib.vndb_autocomplete import vn_name_autocomplete, CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CACHED_VNDB_THUMBNAIL_QUERY, CACHED_VNDB_TITLE_QUERY, CREATE_VNDB_FTS5_TABLE_QUERY, CREATE_VNDB_TRIGGER_DELETE, CREATE_VNDB_TRIGGER_INSERT, CREATE_VNDB_TRIGGER_UPDATE
+from lib.tmdb_autocomplete import listening_autocomplete, CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CACHED_TMDB_THUMBNAIL_QUERY, CACHED_TMDB_TITLE_QUERY, CREATE_TMDB_FTS5_TABLE_QUERY, CREATE_TMDB_TRIGGER_DELETE, CREATE_TMDB_TRIGGER_INSERT, CREATE_TMDB_TRIGGER_UPDATE, CACHED_TMDB_GET_MEDIA_TYPE_QUERY
 
 import discord
 import os
@@ -68,6 +68,8 @@ MEDIA_TYPES = {
         "autocomplete": vn_name_autocomplete,
         "points_multiplier": 0.0028571428571429,
         "thumbnail_query": CACHED_VNDB_THUMBNAIL_QUERY,
+        "title_query": CACHED_VNDB_TITLE_QUERY,
+        "unit_name": "character",
         "source_url": "https://vndb.org/",
     },
     "Manga": {
@@ -77,6 +79,8 @@ MEDIA_TYPES = {
         "autocomplete": anime_manga_name_autocomplete,
         "points_multiplier": 0.125,
         "thumbnail_query": CACHED_ANILIST_THUMBNAIL_QUERY,
+        "title_query": CACHED_ANILIST_TITLE_QUERY,
+        "unit_name": "page",
         "source_url": "https://anilist.co/manga/",
     },
     "Anime": {
@@ -86,6 +90,8 @@ MEDIA_TYPES = {
         "autocomplete": anime_manga_name_autocomplete,
         "points_multiplier": 13.0,
         "thumbnail_query": CACHED_ANILIST_THUMBNAIL_QUERY,
+        "title_query": CACHED_ANILIST_TITLE_QUERY,
+        "unit_name": "episode",
         "source_url": "https://anilist.co/anime/",
     },
     "Book": {
@@ -95,6 +101,8 @@ MEDIA_TYPES = {
         "autocomplete": None,
         "points_multiplier": 1,
         "thumbnail_query": None,
+        "title_query": None,
+        "unit_name": "page",
         "source_url": None,
     },
     "Reading Time": {
@@ -104,6 +112,8 @@ MEDIA_TYPES = {
         "autocomplete": None,
         "points_multiplier": 0.67,
         "thumbnail_query": None,
+        "title_query": None,
+        "unit_name": "minute",
         "source_url": None,
     },
     "Listening Time": {
@@ -113,7 +123,9 @@ MEDIA_TYPES = {
         "autocomplete": listening_autocomplete,
         "points_multiplier": 0.67,
         "thumbnail_query": CACHED_TMDB_THUMBNAIL_QUERY,
-        "source_url": "https://www.themoviedb.org/",
+        "title_query": CACHED_TMDB_TITLE_QUERY,
+        "unit_name": "minute",
+        "source_url": "https://www.themoviedb.org/{tmdb_media_type}/",
     },
     "Reading": {
         "log_name": "Reading (in characters read)",
@@ -122,6 +134,7 @@ MEDIA_TYPES = {
         "autocomplete": None,
         "points_multiplier": 0.0028571428571429,
         "thumbnail_query": None,
+        "unit_name": "character",
         "source_url": None,
     },
 }
@@ -145,13 +158,20 @@ class ImmersionLog(commands.Cog):
     async def cog_load(self):
         await self.bot.RUN(CREATE_LOGS_TABLE)
         await self.bot.RUN(CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY)
-        await self.bot.RUN(CREATE_ANILIST_INDEX_QUERY_1)
-        await self.bot.RUN(CREATE_ANILIST_INDEX_QUERY_2)
+        await self.bot.RUN(CREATE_ANILIST_FTS5_TABLE_QUERY)
+        await self.bot.RUN(CREATE_ANILIST_TRIGGER_DELETE)
+        await self.bot.RUN(CREATE_ANILIST_TRIGGER_INSERT)
+        await self.bot.RUN(CREATE_ANILIST_TRIGGER_UPDATE)
         await self.bot.RUN(CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY)
-        await self.bot.RUN(CREATE_VNDB_INDEX_QUERY)
+        await self.bot.RUN(CREATE_VNDB_FTS5_TABLE_QUERY)
+        await self.bot.RUN(CREATE_VNDB_TRIGGER_DELETE)
+        await self.bot.RUN(CREATE_VNDB_TRIGGER_INSERT)
+        await self.bot.RUN(CREATE_VNDB_TRIGGER_UPDATE)
         await self.bot.RUN(CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY)
-        await self.bot.RUN(CREATE_TMDB_INDEX_QUERY_1)
-        await self.bot.RUN(CREATE_TMDB_INDEX_QUERY_2)
+        await self.bot.RUN(CREATE_TMDB_FTS5_TABLE_QUERY)
+        await self.bot.RUN(CREATE_TMDB_TRIGGER_DELETE)
+        await self.bot.RUN(CREATE_TMDB_TRIGGER_INSERT)
+        await self.bot.RUN(CREATE_TMDB_TRIGGER_UPDATE)
 
     @discord.app_commands.command(name='log', description='Log your immersion!')
     @discord.app_commands.describe(
@@ -207,13 +227,30 @@ class ImmersionLog(commands.Cog):
 
         points_after = await self.get_points_for_current_month(interaction.user.id)
 
-        # TODO: CREATE NICE EMBED FOR LOGS
         print(points_before, points_after)
 
-        random_guild_emoji = random.choice(interaction.guild.emojis)
-        consecutive_days = await self.get_consecutive_days_logged(interaction.user.id)
+        if interaction.guild:
+            random_guild_emoji = random.choice(interaction.guild.emojis)
+        else:
+            random_guild_emoji = ""
 
-        await interaction.followup.send("Your log has been recorded successfully!", ephemeral=True)
+        consecutive_days = await self.get_consecutive_days_logged(interaction.user.id)
+        actual_title = await self.get_title(media_type, name)
+        thumbnail_url = await self.get_thumbnail_url(media_type, name)
+        source_url = await self.get_source_url(media_type, name)
+
+        embed_title = f"Logged {amount} {MEDIA_TYPES[media_type]['unit_name']}{'s' if amount > 1 else ""} of {media_type} {random_guild_emoji}"
+        log_embed = discord.Embed(title=embed_title, color=discord.Color.random())
+        log_embed.description = f"[{actual_title}]({source_url})" if source_url else actual_title
+        log_embed.add_field(name="Comment", value=comment or "No comment", inline=False)
+        log_embed.add_field(name="Points Received", value=f"+{points_received}")
+        log_embed.add_field(name="Total Points/Month", value=f"{points_before} → {points_after}")
+        log_embed.add_field(name="Streak", value=f"{consecutive_days} day{'s' if consecutive_days > 1 else ''}")
+        if thumbnail_url:
+            log_embed.set_thumbnail(url=thumbnail_url)
+        log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {backfill_date}", icon_url=interaction.user.display_avatar.url)
+
+        await interaction.followup.send(embed=log_embed)
 
     async def get_consecutive_days_logged(self, user_id: int) -> int:
         result = await self.bot.GET(GET_CONSECUTIVE_DAYS_QUERY, (user_id,))
@@ -237,6 +274,29 @@ class ImmersionLog(commands.Cog):
         if result and result[0] is not None:
             return result[0][0]
         return 0.0
+
+    async def get_thumbnail_url(self, media_type: str, name: str) -> Optional[str]:
+        if MEDIA_TYPES[media_type]['thumbnail_query']:
+            result = await self.bot.GET(MEDIA_TYPES[media_type]['thumbnail_query'], (name,))
+            if result:
+                return result[0][0]
+        return None
+
+    async def get_title(self, media_type: str, name: str) -> str:
+        if MEDIA_TYPES[media_type]['title_query']:
+            result = await self.bot.GET(MEDIA_TYPES[media_type]['title_query'], (name,))
+            if result:
+                return result[0][0]
+        return name
+
+    async def get_source_url(self, media_type: str, name: str) -> Optional[str]:
+        if not MEDIA_TYPES[media_type]['source_url']:
+            return None
+        if media_type == "Listening Time":
+            tmdb_media_type = await self.bot.GET(CACHED_TMDB_GET_MEDIA_TYPE_QUERY, (name,))
+            tmdb_media_type = tmdb_media_type[0][0]
+            return MEDIA_TYPES[media_type]['source_url'].format(tmdb_media_type=tmdb_media_type) + name
+        return MEDIA_TYPES[media_type]['source_url'] + name
 
 
 async def setup(bot):

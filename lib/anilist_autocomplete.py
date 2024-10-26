@@ -47,11 +47,42 @@ CREATE TABLE IF NOT EXISTS cached_anilist_results (
 );
 """
 
-CREATE_ANILIST_INDEX_QUERY_1 = """
-CREATE INDEX IF NOT EXISTS idx_title_english ON cached_anilist_results (title_english);
+CREATE_ANILIST_FTS5_TABLE_QUERY = """
+CREATE VIRTUAL TABLE IF NOT EXISTS anilist_fts USING fts5(
+    anilist_id UNINDEXED,
+    title_english,
+    title_native,
+    cover_image_url UNINDEXED,
+    media_type UNINDEXED,
+    content='cached_anilist_results',
+    tokenize = 'porter'
+);
 """
-CREATE_ANILIST_INDEX_QUERY_2 = """
-CREATE INDEX IF NOT EXISTS idx_title_native ON cached_anilist_results (title_native);
+
+CREATE_ANILIST_TRIGGER_INSERT = """
+CREATE TRIGGER IF NOT EXISTS anilist_fts_insert AFTER INSERT ON cached_anilist_results
+BEGIN
+  INSERT INTO anilist_fts(rowid, anilist_id, title_english, title_native, media_type)
+  VALUES (new.rowid, new.anilist_id, new.title_english, new.title_native, new.media_type);
+END;
+"""
+
+CREATE_ANILIST_TRIGGER_UPDATE = """
+CREATE TRIGGER IF NOT EXISTS anilist_fts_update AFTER UPDATE ON cached_anilist_results
+BEGIN
+  UPDATE anilist_fts SET 
+    title_english = new.title_english,
+    title_native = new.title_native,
+    media_type = new.media_type
+  WHERE rowid = old.rowid;
+END;
+"""
+
+CREATE_ANILIST_TRIGGER_DELETE = """
+CREATE TRIGGER IF NOT EXISTS anilist_fts_delete AFTER DELETE ON cached_anilist_results
+BEGIN
+  DELETE FROM anilist_fts WHERE rowid = old.rowid;
+END;
 """
 
 CACHED_ANILIST_RESULTS_INSERT_QUERY = """
@@ -65,12 +96,10 @@ ON CONFLICT(anilist_id) DO UPDATE SET
     timestamp=CURRENT_TIMESTAMP;
 """
 
-# TODO: Optimize for efficient search
 CACHED_ANILIST_RESULTS_SEARCH_QUERY = """
 SELECT anilist_id, title_english, title_native, cover_image_url 
-FROM cached_anilist_results 
-WHERE (LOWER(REPLACE(title_english, ' ', '')) LIKE '%' || LOWER(REPLACE(?, ' ', '')) || '%' 
-    OR LOWER(REPLACE(title_native, ' ', '')) LIKE '%' || LOWER(REPLACE(?, ' ', '')) || '%') 
+FROM anilist_fts 
+WHERE (title_english LIKE '%' || ? || '%' OR title_native LIKE '%' || ? || '%')
 AND media_type = ? 
 LIMIT 10;
 """
@@ -82,6 +111,12 @@ WHERE anilist_id = ? AND media_type = ?;
 
 CACHED_ANILIST_THUMBNAIL_QUERY = """
 SELECT cover_image_url FROM cached_anilist_results
+WHERE anilist_id = ?;
+"""
+
+CACHED_ANILIST_TITLE_QUERY = """
+SELECT COALESCE(title_english, title_native) AS title 
+FROM cached_anilist_results 
 WHERE anilist_id = ?;
 """
 
@@ -121,7 +156,7 @@ async def query_anilist(interaction: discord.Interaction, current_input: str, bo
                     if not title or not media_id:
                         continue
 
-                    choice_name = f"{title[:80]} (ID: {media_id})"
+                    choice_name = f"{title[:80]} (ID: {media_id}) (API)"
                     if title:
                         choices.append(discord.app_commands.Choice(name=choice_name, value=str(media_id)))
 
@@ -148,27 +183,22 @@ async def anime_manga_name_autocomplete(interaction: discord.Interaction, curren
             anilist_id, title_english, title_native, _ = cached_result
             title = title_english or title_native
             if title:
-                choice_name = f"{title[:80]} (ID: {anilist_id})"
+                choice_name = f"{title[:80]} (ID: {anilist_id}) (Cached)"
                 return [discord.app_commands.Choice(name=choice_name, value=str(anilist_id))]
         else:
             return await query_anilist(interaction, current_input, tmw_bot)
     else:
-        cached_results = await tmw_bot.GET(CACHED_ANILIST_RESULTS_SEARCH_QUERY, (f"%{current_input}%", f"%{current_input}%", media_type))
+        cached_results = await tmw_bot.GET(CACHED_ANILIST_RESULTS_SEARCH_QUERY, (current_input, current_input, media_type))
         choices = []
         for cached_result in cached_results:
             anilist_id, title_english, title_native, _ = cached_result
             title = title_english or title_native
             if title:
-                choice_name = f"{title[:80]} (ID: {anilist_id})"
+                choice_name = f"{title[:80]} (ID: {anilist_id}) (Cached)"
                 choices.append(discord.app_commands.Choice(name=choice_name, value=str(anilist_id)))
 
-        if len(choices) < 3:
+        if len(choices) < 1:
             anilist_choices = await query_anilist(interaction, current_input, tmw_bot)
             choices.extend(anilist_choices)
 
         return choices[:10]
-
-
-async def listening_autocomplete(interaction: discord.Interaction, current_input: str):
-    # TODO: TMDB API
-    return []
