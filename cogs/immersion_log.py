@@ -229,8 +229,6 @@ class ImmersionLog(commands.Cog):
 
         points_after = await self.get_points_for_current_month(interaction.user.id)
 
-        print(points_before, points_after)
-
         if interaction.guild:
             random_guild_emoji = random.choice(interaction.guild.emojis)
         else:
