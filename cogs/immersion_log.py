@@ -218,6 +218,8 @@ class ImmersionLog(commands.Cog):
 
         # TODO: CHECK IF GOALS FULFILLED
 
+        # TODO: ACHIEVEMENTS
+
         points_before = await self.get_points_for_current_month(interaction.user.id)
 
         await self.bot.RUN(
@@ -291,6 +293,9 @@ class ImmersionLog(commands.Cog):
 
     async def get_source_url(self, media_type: str, name: str) -> Optional[str]:
         if not MEDIA_TYPES[media_type]['source_url']:
+            return None
+        exists_in_db = await self.bot.GET(MEDIA_TYPES[media_type]['title_query'], (name,))
+        if not exists_in_db:
             return None
         if media_type == "Listening Time":
             tmdb_media_type = await self.bot.GET(CACHED_TMDB_GET_MEDIA_TYPE_QUERY, (name,))
