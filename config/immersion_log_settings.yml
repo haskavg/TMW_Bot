@@ -1,0 +1,8 @@
+points_multipliers:
+  Visual_Novel: 0.0028571428571429
+  Manga: 0.125
+  Anime: 13.0
+  Book: 1.0
+  Reading_Time: 0.67
+  Listening_Time: 0.67
+  Reading: 0.0028571428571429

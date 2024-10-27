@@ -17,6 +17,10 @@ SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
 with open(SERVER_SETTINGS_PATH, "r") as f:
     server_settings = yaml.safe_load(f)
 
+IMMERSION_LOG_SETTINGS = "config/immersion_log_settings.yml"
+with open(IMMERSION_LOG_SETTINGS, "r") as f:
+    immersion_log_settings = yaml.safe_load(f)
+
 CREATE_LOGS_TABLE = """
     CREATE TABLE IF NOT EXISTS logs (
     log_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +70,7 @@ MEDIA_TYPES = {
         "short_id": "VN",
         "max_logged": 2000000,
         "autocomplete": vn_name_autocomplete,
-        "points_multiplier": 0.0028571428571429,
+        "points_multiplier": immersion_log_settings['points_multipliers']["Visual_Novel"],
         "thumbnail_query": CACHED_VNDB_THUMBNAIL_QUERY,
         "title_query": CACHED_VNDB_TITLE_QUERY,
         "unit_name": "character",
@@ -77,7 +81,7 @@ MEDIA_TYPES = {
         "short_id": "MANGA",
         "max_logged": 1000,
         "autocomplete": anime_manga_name_autocomplete,
-        "points_multiplier": 0.125,
+        "points_multiplier": immersion_log_settings['points_multipliers']["Manga"],
         "thumbnail_query": CACHED_ANILIST_THUMBNAIL_QUERY,
         "title_query": CACHED_ANILIST_TITLE_QUERY,
         "unit_name": "page",
@@ -88,7 +92,7 @@ MEDIA_TYPES = {
         "short_id": "ANIME",
         "max_logged": 100,
         "autocomplete": anime_manga_name_autocomplete,
-        "points_multiplier": 13.0,
+        "points_multiplier": immersion_log_settings['points_multipliers']["Anime"],
         "thumbnail_query": CACHED_ANILIST_THUMBNAIL_QUERY,
         "title_query": CACHED_ANILIST_TITLE_QUERY,
         "unit_name": "episode",
@@ -99,7 +103,7 @@ MEDIA_TYPES = {
         "short_id": "BOOK",
         "max_logged": 500,
         "autocomplete": None,
-        "points_multiplier": 1,
+        "points_multiplier": immersion_log_settings['points_multipliers']["Book"],
         "thumbnail_query": None,
         "title_query": None,
         "unit_name": "page",
@@ -110,7 +114,7 @@ MEDIA_TYPES = {
         "short_id": "RT",
         "max_logged": 420,
         "autocomplete": None,
-        "points_multiplier": 0.67,
+        "points_multiplier": immersion_log_settings['points_multipliers']["Reading_Time"],
         "thumbnail_query": None,
         "title_query": None,
         "unit_name": "minute",
@@ -121,7 +125,7 @@ MEDIA_TYPES = {
         "short_id": "LT",
         "max_logged": 420,
         "autocomplete": listening_autocomplete,
-        "points_multiplier": 0.67,
+        "points_multiplier": immersion_log_settings['points_multipliers']["Listening_Time"],
         "thumbnail_query": CACHED_TMDB_THUMBNAIL_QUERY,
         "title_query": CACHED_TMDB_TITLE_QUERY,
         "unit_name": "minute",
@@ -132,7 +136,7 @@ MEDIA_TYPES = {
         "short_id": "READING",
         "max_logged": 2000000,
         "autocomplete": None,
-        "points_multiplier": 0.0028571428571429,
+        "points_multiplier": immersion_log_settings['points_multipliers']["Reading"],
         "thumbnail_query": None,
         "unit_name": "character",
         "source_url": None,
