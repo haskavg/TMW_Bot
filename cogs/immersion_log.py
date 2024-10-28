@@ -12,7 +12,6 @@ from datetime import timedelta, datetime
 from discord.ext import commands
 from discord.ext import tasks
 
-
 SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
 with open(SERVER_SETTINGS_PATH, "r") as f:
     server_settings = yaml.safe_load(f)
@@ -31,11 +30,14 @@ CREATE_LOGS_TABLE = """
     amount_logged INTEGER NOT NULL,
     points_received REAL NOT NULL,
     log_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"""
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    achievement_group TEXT);
+"""
 
 CREATE_LOG_QUERY = """
-    INSERT INTO logs (user_id, media_type, media_name, comment, amount_logged, points_received, log_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?);"""
+    INSERT INTO logs (user_id, media_type, media_name, comment, amount_logged, points_received, log_date, achievement_group)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+"""
 
 GET_CONSECUTIVE_DAYS_QUERY = """
     SELECT log_date
@@ -62,6 +64,24 @@ DELETE_LOG_QUERY = """
     DELETE FROM logs
     WHERE log_id = ? AND user_id = ?;
 """
+
+GET_TOTAL_POINTS_FOR_ACHIEVEMENT_GROUP_QUERY = """
+    SELECT SUM(points_received) AS total_points
+    FROM logs
+    WHERE user_id = ? AND achievement_group = ?;
+"""
+
+ACHIEVEMENT_THRESHOLDS = [1, 100, 300, 1000, 2000, 10000, 25000, 100000]
+ACHIEVEMENT_TITLES = ACHIEVEMENT_TITLES = [
+    'Beginner 🌱',
+    'Initiate ⚡️',
+    'Apprentice 🎓',
+    'Hobbyist 🥇',
+    'Enthusiast 🔥',
+    'Aficionado 🌟',
+    'Sage 🤖',
+    'Master 🏆'
+]
 
 
 async def log_undo_autocomplete(interaction: discord.Interaction, current_input: str):
@@ -106,6 +126,7 @@ MEDIA_TYPES = {
         "title_query": CACHED_VNDB_TITLE_QUERY,
         "unit_name": "character",
         "source_url": "https://vndb.org/",
+        "Achievement_Group": "Visual Novel",
     },
     "Manga": {
         "log_name": "Manga (in pages read)",
@@ -117,6 +138,7 @@ MEDIA_TYPES = {
         "title_query": CACHED_ANILIST_TITLE_QUERY,
         "unit_name": "page",
         "source_url": "https://anilist.co/manga/",
+        "Achievement_Group": "Manga",
     },
     "Anime": {
         "log_name": "Anime (in episodes watched)",
@@ -128,6 +150,7 @@ MEDIA_TYPES = {
         "title_query": CACHED_ANILIST_TITLE_QUERY,
         "unit_name": "episode",
         "source_url": "https://anilist.co/anime/",
+        "Achievement_Group": "Anime",
     },
     "Book": {
         "log_name": "Book (in pages read)",
@@ -139,6 +162,7 @@ MEDIA_TYPES = {
         "title_query": None,
         "unit_name": "page",
         "source_url": None,
+        "Achievement_Group": "Reading",
     },
     "Reading Time": {
         "log_name": "Reading Time (in minutes)",
@@ -150,6 +174,7 @@ MEDIA_TYPES = {
         "title_query": None,
         "unit_name": "minute",
         "source_url": None,
+        "Achievement_Group": "Reading",
     },
     "Listening Time": {
         "log_name": "Listening Time (in minutes)",
@@ -161,6 +186,7 @@ MEDIA_TYPES = {
         "title_query": CACHED_TMDB_TITLE_QUERY,
         "unit_name": "minute",
         "source_url": "https://www.themoviedb.org/{tmdb_media_type}/",
+        "Achievement_Group": "Listening",
     },
     "Reading": {
         "log_name": "Reading (in characters read)",
@@ -169,8 +195,10 @@ MEDIA_TYPES = {
         "autocomplete": None,
         "points_multiplier": immersion_log_settings['points_multipliers']["Reading"],
         "thumbnail_query": None,
+        "title_query": None,
         "unit_name": "character",
         "source_url": None,
+        "Achievement_Group": "Reading",
     },
 }
 
@@ -253,16 +281,30 @@ class ImmersionLog(commands.Cog):
 
         # TODO: CHECK IF GOALS FULFILLED
 
-        # TODO: ACHIEVEMENTS
-
-        points_before = await self.get_points_for_current_month(interaction.user.id)
+        current_month_points_before = await self.get_points_for_current_month(interaction.user.id)
 
         await self.bot.RUN(
             CREATE_LOG_QUERY,
-            (interaction.user.id, media_type, name, comment, amount, points_received, log_date)
+            (interaction.user.id, media_type, name, comment, amount,
+             points_received, log_date, MEDIA_TYPES[media_type]['Achievement_Group'])
         )
 
-        points_after = await self.get_points_for_current_month(interaction.user.id)
+        current_month_points_after = await self.get_points_for_current_month(interaction.user.id)
+
+        achievement_group = MEDIA_TYPES[media_type]['Achievement_Group']
+        total_achievement_points = await self.get_total_points_for_achievement_group(interaction.user.id, achievement_group)
+
+        current_achievement = None
+        next_achievement = None
+        achievement_reached = False
+
+        for threshold, title in zip(ACHIEVEMENT_THRESHOLDS, ACHIEVEMENT_TITLES):
+            if total_achievement_points - points_received < threshold <= total_achievement_points:
+                current_achievement = f"{achievement_group} {title}"
+                achievement_reached = True
+            elif total_achievement_points < threshold:
+                next_achievement = f"{achievement_group} {title} at `{threshold}` {achievement_group} points (Current: `{total_achievement_points}`)"
+                break
 
         if interaction.guild:
             random_guild_emoji = random.choice(interaction.guild.emojis)
@@ -280,8 +322,13 @@ class ImmersionLog(commands.Cog):
         log_embed.description = f"[{actual_title}]({source_url})" if source_url else actual_title
         log_embed.add_field(name="Comment", value=comment or "No comment", inline=False)
         log_embed.add_field(name="Points Received", value=f"+{points_received}")
-        log_embed.add_field(name="Total Points/Month", value=f"{points_before} → {points_after}")
+        log_embed.add_field(name="Total Points/Month",
+                            value=f"{current_month_points_before} → {current_month_points_after}")
         log_embed.add_field(name="Streak", value=f"{consecutive_days} day{'s' if consecutive_days > 1 else ''}")
+        if achievement_reached and current_achievement:
+            log_embed.add_field(name="Achievement Reached! 🎉", value=current_achievement, inline=False)
+        if next_achievement:
+            log_embed.add_field(name="Next Achievement", value=next_achievement, inline=False)
         if thumbnail_url:
             log_embed.set_thumbnail(url=thumbnail_url)
         log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {
@@ -308,8 +355,8 @@ class ImmersionLog(commands.Cog):
 
     async def get_points_for_current_month(self, user_id: int) -> float:
         result = await self.bot.GET(GET_POINTS_FOR_CURRENT_MONTH_QUERY, (user_id,))
-        if result and result[0] is not None:
-            return result[0][0]
+        if result and result[0] and result[0][0]:
+            return round(result[0][0], 2)
         return 0.0
 
     async def get_thumbnail_url(self, media_type: str, name: str) -> Optional[str]:
@@ -357,6 +404,33 @@ class ImmersionLog(commands.Cog):
         log_date = datetime.strptime(log_date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
         await self.bot.RUN(DELETE_LOG_QUERY, (log_id, interaction.user.id))
         await interaction.response.send_message(f"> {interaction.user.mention} Your log for `{amount_logged} {MEDIA_TYPES[media_type]['unit_name']}` of `{media_type}` (`{media_name if media_name else "No Name"}`) on `{log_date}` has been deleted.")
+
+    async def get_total_points_for_achievement_group(self, user_id: int, achievement_group: str) -> float:
+        result = await self.bot.GET(GET_TOTAL_POINTS_FOR_ACHIEVEMENT_GROUP_QUERY, (user_id, achievement_group))
+        if result and result[0] and result[0][0] is not None:
+            return result[0][0]
+        return 0.0
+
+    @discord.app_commands.command(name='log_achievements', description='Display all your achievements!')
+    async def log_achievements(self, interaction: discord.Interaction):
+        user_id = interaction.user.id
+        achievements_list = []
+        for achievement_group in set(settings_group['Achievement_Group'] for settings_group in MEDIA_TYPES.values()):
+            total_points = await self.get_total_points_for_achievement_group(user_id, achievement_group)
+            for threshold, title in zip(ACHIEVEMENT_THRESHOLDS, ACHIEVEMENT_TITLES):
+                if total_points >= threshold:
+                    achievements_list.append(f"- {achievement_group} {title} - {threshold} points")
+                else:
+                    break
+
+        if achievements_list:
+            achievements_str = "\n".join(achievements_list)
+        else:
+            achievements_str = "No achievements yet. Keep immersing!"
+
+        embed = discord.Embed(title=f"{interaction.user.display_name}'s Achievements",
+                              description=achievements_str, color=discord.Color.gold())
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
