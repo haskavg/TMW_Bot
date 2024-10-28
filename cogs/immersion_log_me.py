@@ -9,6 +9,8 @@ from collections import defaultdict
 from lib.media_types import MEDIA_TYPES
 from lib.bot import TMWBot
 
+from .username_fetcher import get_username_db
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import io
@@ -25,10 +27,11 @@ class ImmersionLogMe(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
 
-    @discord.app_commands.command(name='log_me', description='Display an immersion overview for a specified period.')
+    @discord.app_commands.command(name='log_stats', description='Display an immersion overview for a specified period.')
     @discord.app_commands.describe(user='Optional user to display the immersion overview for.', from_date='Optional start date (YYYY-MM-DD).', to_date='Optional end date (YYYY-MM-DD).')
     async def log_me(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None):
         user_id = user.id if user else interaction.user.id
+        user_name = await get_username_db(self.bot, user_id)
         try:
             from_date = datetime.strptime(from_date, '%Y-%m-%d') if from_date else discord.utils.utcnow() - timedelta(days=30)
             from_date = from_date.replace(hour=0, minute=0, second=0)
@@ -99,7 +102,7 @@ class ImmersionLogMe(commands.Cog):
         # Create the embed
         timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
         embed = discord.Embed(title="Immersion Overview", color=discord.Color.blurple())
-        embed.add_field(name="User", value=interaction.user.display_name, inline=True)
+        embed.add_field(name="User", value=user_name, inline=True)
         embed.add_field(name="Timeframe", value=timeframe_str, inline=True)
         embed.add_field(name="Points", value=f"{points_total:.2f}", inline=True)
         embed.add_field(name="Breakdown", value=breakdown_str, inline=False)
