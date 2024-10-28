@@ -272,16 +272,18 @@ class ImmersionLog(commands.Cog):
             return await interaction.response.send_message("Comment must be less than 200 characters.", ephemeral=True)
 
         if backfill_date is None:
-            backfill_date = discord.utils.utcnow().strftime('%Y-%m-%d')
-        try:
-            log_date = datetime.strptime(backfill_date, '%Y-%m-%d')
-            today = discord.utils.utcnow().date()
-            if log_date.date() > today:
-                return await interaction.response.send_message("You cannot log a date in the future.", ephemeral=True)
-            if (today - log_date.date()).days > 7:
-                return await interaction.response.send_message("You cannot log a date more than 7 days in the past.", ephemeral=True)
-        except ValueError:
-            return await interaction.response.send_message("Invalid date format. Please use YYYY-MM-DD.", ephemeral=True)
+            log_date = discord.utils.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            try:
+                log_date = datetime.strptime(backfill_date, '%Y-%m-%d')
+                today = discord.utils.utcnow().date()
+                if log_date.date() > today:
+                    return await interaction.response.send_message("You cannot log a date in the future.", ephemeral=True)
+                if (today - log_date.date()).days > 7:
+                    return await interaction.response.send_message("You cannot log a date more than 7 days in the past.", ephemeral=True)
+                log_date = log_date.strftime('%Y-%m-%d %H:%M:%S')
+            except ValueError:
+                return await interaction.response.send_message("Invalid date format. Please use YYYY-MM-DD.", ephemeral=True)
 
         await interaction.response.defer()
 
@@ -311,7 +313,7 @@ class ImmersionLog(commands.Cog):
                 current_achievement = f"{achievement_group} {title}"
                 achievement_reached = True
             elif total_achievement_points < threshold:
-                next_achievement = f"{achievement_group} {title} at `{threshold}` {achievement_group} points (Current: `{total_achievement_points}`)"
+                next_achievement = f"{achievement_group} {title} at `{threshold}` {achievement_group} points (Current: `{round(total_achievement_points, 2)}`)"
                 break
 
         if interaction.guild:
@@ -339,8 +341,7 @@ class ImmersionLog(commands.Cog):
             log_embed.add_field(name="Next Achievement", value=next_achievement, inline=False)
         if thumbnail_url:
             log_embed.set_thumbnail(url=thumbnail_url)
-        log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {
-                             backfill_date}", icon_url=interaction.user.display_avatar.url)
+        log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {backfill_date}", icon_url=interaction.user.display_avatar.url)
 
         await interaction.followup.send(embed=log_embed)
 
