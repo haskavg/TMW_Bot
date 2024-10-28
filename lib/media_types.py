@@ -61,7 +61,7 @@ MEDIA_TYPES = {
     "Reading Time": {
         "log_name": "Reading Time (in minutes)",
         "short_id": "RT",
-        "max_logged": 420,
+        "max_logged": 1440,
         "autocomplete": None,
         "points_multiplier": immersion_log_settings['points_multipliers']["Reading_Time"],
         "thumbnail_query": None,
@@ -73,7 +73,7 @@ MEDIA_TYPES = {
     "Listening Time": {
         "log_name": "Listening Time (in minutes)",
         "short_id": "LT",
-        "max_logged": 420,
+        "max_logged": 1440,
         "autocomplete": listening_autocomplete,
         "points_multiplier": immersion_log_settings['points_multipliers']["Listening_Time"],
         "thumbnail_query": CACHED_TMDB_THUMBNAIL_QUERY,
