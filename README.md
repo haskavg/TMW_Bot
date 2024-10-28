@@ -4,6 +4,7 @@
 ### General ToDo
 - Clubs
 - Bookmarker
+- Global Username Cache/Fetcher
 ### Acknowledgements
 This bot is based on the following project (mostly used as a feature reference without or minimal direct code reuse):
 

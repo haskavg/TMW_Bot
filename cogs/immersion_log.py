@@ -77,6 +77,16 @@ GET_USER_LOGS_FOR_EXPORT_QUERY = """
     ORDER BY log_date DESC;
 """
 
+GET_MONTHLY_LEADERBOARD_QUERY = """
+    SELECT user_id, SUM(points_received) AS total_points
+    FROM logs
+    WHERE strftime('%Y-%m', log_date) = strftime('%Y-%m', 'now')
+    AND (? IS NULL OR media_type = ?)
+    GROUP BY user_id
+    ORDER BY total_points DESC
+    LIMIT 20;
+"""
+
 ACHIEVEMENT_THRESHOLDS = [1, 100, 300, 1000, 2000, 10000, 25000, 100000]
 ACHIEVEMENT_TITLES = ACHIEVEMENT_TITLES = [
     'Beginner 🌱',
@@ -386,6 +396,32 @@ class ImmersionLog(commands.Cog):
 
         await interaction.response.send_message("Here are the immersion logs:", file=discord.File(csv_filepath))
         os.remove(csv_filepath)
+
+    @discord.app_commands.command(name='log_leaderboard', description='Display the leaderboard for the current month!')
+    @discord.app_commands.describe(media_type='Optionally specify the media type for leaderboard filtering.')
+    @discord.app_commands.choices(media_type=LOG_CHOICES)
+    async def log_leaderboard(self, interaction: discord.Interaction, media_type: Optional[str] = None):
+        params = (media_type, media_type) if media_type else (None, None)
+        leaderboard_data = await self.bot.GET(GET_MONTHLY_LEADERBOARD_QUERY, params)
+
+        embed = discord.Embed(
+            title=f"Immersion Leaderboard - {discord.utils.utcnow().strftime('%B %Y')}",
+            color=discord.Color.blue()
+        )
+        if media_type:
+            embed.title += f" for {media_type}"
+
+        if leaderboard_data:
+            for rank, (user_id, total_points) in enumerate(leaderboard_data, start=1):
+                user = self.bot.get_user(user_id)
+                if not user:
+                    user = await self.bot.fetch_user(user_id)
+                user_name = user.display_name if user else f"User {user_id}"
+                embed.add_field(name=f"{rank}. {user_name}", value=f"{round(total_points, 2)} points", inline=True)
+        else:
+            embed.description = "No logs available for this month. Start immersing to be on the leaderboard!"
+
+        await interaction.response.send_message(embed=embed)
 
 
 async def setup(bot):
