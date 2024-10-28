@@ -3,8 +3,7 @@ import discord
 from discord.ext import commands
 
 from lib.bot import TMWBot
-
-from .immersion_log import LOG_CHOICES, MEDIA_TYPES
+from lib.media_types import LOG_CHOICES, MEDIA_TYPES
 
 from typing import Optional
 
@@ -38,11 +37,22 @@ DELETE_GOAL_QUERY = """
 GET_GOAL_STATUS_QUERY = """
     SELECT goal_id, goal_type, goal_value, end_date, created_at, 
         CASE
-            WHEN goal_type = 'points' THEN (SELECT COALESCE(SUM(points_received), 0) FROM logs WHERE user_id = ? AND media_type = ? AND log_date BETWEEN created_at AND end_date)
-            WHEN goal_type = 'amount' THEN (SELECT COALESCE(SUM(amount_logged), 0) FROM logs WHERE user_id = ? AND media_type = ? AND log_date BETWEEN created_at AND end_date)
+            WHEN goal_type = 'points' THEN (
+                SELECT COALESCE(SUM(points_received), 0) 
+                FROM logs 
+                WHERE user_id = ? 
+                AND media_type = ? 
+                AND log_date BETWEEN user_goals.created_at AND user_goals.end_date)
+            WHEN goal_type = 'amount' THEN (
+                SELECT COALESCE(SUM(amount_logged), 0) 
+                FROM logs 
+                WHERE user_id = ? 
+                AND media_type = ? 
+                AND log_date BETWEEN user_goals.created_at AND user_goals.end_date)
         END as progress
     FROM user_goals
-    WHERE user_id = ? AND media_type = ?;
+    WHERE user_id = ? 
+    AND media_type = ?;
 """
 
 GET_EXPIRED_GOALS_QUERY = """
