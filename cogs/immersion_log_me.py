@@ -1,0 +1,114 @@
+import discord
+from discord.ext import commands
+
+from typing import Optional
+
+from datetime import datetime
+from collections import defaultdict
+
+from lib.media_types import MEDIA_TYPES
+from lib.bot import TMWBot
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import io
+
+GET_USER_LOGS_FOR_PERIOD_QUERY = """
+    SELECT media_type, amount_logged, points_received, log_date
+    FROM logs
+    WHERE user_id = ? AND log_date BETWEEN ? AND ?
+    ORDER BY log_date;
+"""
+
+
+class ImmersionLogMe(commands.Cog):
+    def __init__(self, bot: TMWBot):
+        self.bot = bot
+
+    @discord.app_commands.command(name='log_me', description='Display an immersion overview for a specified period.')
+    @discord.app_commands.describe(user='Optional user to display the immersion overview for.', from_date='Optional start date (YYYY-MM-DD).', to_date='Optional end date (YYYY-MM-DD).')
+    async def log_me(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None):
+        user_id = user.id if user else interaction.user.id
+        try:
+            from_date = datetime.strptime(from_date, '%Y-%m-%d') if from_date else datetime(1970, 1, 1)
+            from_date = from_date.replace(hour=0, minute=0, second=0)
+        except ValueError:
+            return await interaction.response.send_message("Invalid from_date format. Please use YYYY-MM-DD.", ephemeral=True)
+
+        try:
+            to_date = datetime.strptime(to_date, '%Y-%m-%d') if to_date else datetime.now()
+            to_date = to_date.replace(hour=23, minute=59, second=59)
+        except ValueError:
+            return await interaction.response.send_message("Invalid to_date format. Please use YYYY-MM-DD.", ephemeral=True)
+
+        user_logs = await self.bot.GET(GET_USER_LOGS_FOR_PERIOD_QUERY, (user_id, from_date.strftime('%Y-%m-%d %H:%M:%S'), to_date.strftime('%Y-%m-%d %H:%M:%S')))
+
+        if not user_logs:
+            return await interaction.response.send_message("No logs available for the specified period.", ephemeral=True)
+
+        df = pd.DataFrame(user_logs, columns=['media_type', 'amount_logged', 'points_received', 'log_date'])
+        df['log_date'] = pd.to_datetime(df['log_date'])
+
+        points_total = df['points_received'].sum()
+
+        breakdown = df.groupby('media_type').agg({'amount_logged': 'sum', 'points_received': 'sum'}).reset_index()
+        breakdown['unit_name'] = breakdown['media_type'].apply(lambda x: MEDIA_TYPES[x]['unit_name'])
+
+        breakdown_str = "\n".join([
+            f"{row['media_type']}: {row['amount_logged']} {row['unit_name']}{'s' if row['amount_logged'] > 1 else ''} → {row['points_received']} pts"
+            for _, row in breakdown.iterrows()
+        ])
+
+        log_dict = defaultdict(lambda: defaultdict(lambda: 0))
+        for log in user_logs:
+            log_date = pd.to_datetime(log[3])
+            log_dict[log[0]][log_date.date()] += log[2]
+
+        df_plot = pd.DataFrame(log_dict).fillna(0)
+
+        color_dict = {
+            "Book": "tab:orange",
+            "Manga": "tab:red",
+            "Reading": "tab:pink",
+            "Reading Time": "tab:green",
+            "Visual Novel": "tab:cyan",
+            "Anime": "tab:purple",
+            "Listening Time": "tab:blue",
+        }
+
+        fig, ax = plt.subplots(figsize=(16, 12))
+        plt.title('Points Over Time', fontweight='bold', fontsize=20)
+        plt.ylabel('Points', fontweight='bold', fontsize=14)
+        plt.xlabel('Date', fontweight='bold', fontsize=14)
+
+        accumulator = 0
+        for media_type in df_plot.columns:
+            col = df_plot[media_type]
+            ax.bar(df_plot.index, col, bottom=accumulator, color=color_dict.get(media_type, 'gray'), label=media_type)
+            accumulator += col
+
+        ax.legend(df_plot.columns)
+        plt.xticks(df_plot.index, fontsize=10, rotation=45, horizontalalignment='right')
+        plt.grid()
+
+        # Save the plot to a buffer
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png')
+        buffer.seek(0)
+
+        # Create the embed
+        timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
+        embed = discord.Embed(title="Immersion Overview", color=discord.Color.blurple())
+        embed.add_field(name="User", value=interaction.user.display_name, inline=True)
+        embed.add_field(name="Timeframe", value=timeframe_str, inline=True)
+        embed.add_field(name="Points", value=f"{points_total:.2f}", inline=True)
+        embed.add_field(name="Breakdown", value=breakdown_str, inline=False)
+
+        file = discord.File(buffer, filename="immersion_overview.png")
+        embed.set_image(url="attachment://immersion_overview.png")
+
+        await interaction.response.send_message(embed=embed, file=file)
+
+
+async def setup(bot):
+    await bot.add_cog(ImmersionLogMe(bot))
