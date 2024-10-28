@@ -7,6 +7,7 @@ import discord
 import os
 import yaml
 import random
+import csv
 from typing import Optional
 from datetime import timedelta, datetime
 from discord.ext import commands
@@ -69,6 +70,13 @@ GET_TOTAL_POINTS_FOR_ACHIEVEMENT_GROUP_QUERY = """
     SELECT SUM(points_received) AS total_points
     FROM logs
     WHERE user_id = ? AND achievement_group = ?;
+"""
+
+GET_USER_LOGS_FOR_EXPORT_QUERY = """
+    SELECT log_id, media_type, media_name, comment, amount_logged, points_received, log_date
+    FROM logs
+    WHERE user_id = ?
+    ORDER BY log_date DESC;
 """
 
 ACHIEVEMENT_THRESHOLDS = [1, 100, 300, 1000, 2000, 10000, 25000, 100000]
@@ -431,6 +439,37 @@ class ImmersionLog(commands.Cog):
         embed = discord.Embed(title=f"{interaction.user.display_name}'s Achievements",
                               description=achievements_str, color=discord.Color.gold())
         await interaction.response.send_message(embed=embed)
+
+    @discord.app_commands.command(name='log_export', description='Export immersion logs as a CSV file! Optionally, specify a user ID to export their logs.')
+    @discord.app_commands.describe(user='The user to export logs for (optional)')
+    async def log_export(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
+        user_id = user.id if user else interaction.user.id
+        user_logs = await self.bot.GET(GET_USER_LOGS_FOR_EXPORT_QUERY, (user_id,))
+
+        if not user_logs:
+            return await interaction.response.send_message("No logs to export for the specified user.", ephemeral=True)
+
+        csv_filename = f"immersion_logs_{user_id}.csv"
+        csv_filepath = os.path.join("/tmp", csv_filename)
+
+        with open(csv_filepath, mode='w', newline='', encoding='utf-8') as csv_file:
+            fieldnames = ['Log ID', 'Media Type', 'Media Name', 'Comment', 'Amount Logged', 'Points Received', 'Log Date']
+            writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for log in user_logs:
+                writer.writerow({
+                    'Log ID': log[0],
+                    'Media Type': log[1],
+                    'Media Name': log[2] or 'N/A',
+                    'Comment': log[3] or 'No comment',
+                    'Amount Logged': log[4],
+                    'Points Received': log[5],
+                    'Log Date': log[6]
+                })
+
+        await interaction.response.send_message("Here are the immersion logs:", file=discord.File(csv_filepath))
+        os.remove(csv_filepath)
 
 
 async def setup(bot):
