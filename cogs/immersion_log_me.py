@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from typing import Optional
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 
 from lib.media_types import MEDIA_TYPES
@@ -30,7 +30,7 @@ class ImmersionLogMe(commands.Cog):
     async def log_me(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None):
         user_id = user.id if user else interaction.user.id
         try:
-            from_date = datetime.strptime(from_date, '%Y-%m-%d') if from_date else datetime(1970, 1, 1)
+            from_date = datetime.strptime(from_date, '%Y-%m-%d') if from_date else discord.utils.utcnow() - timedelta(days=30)
             from_date = from_date.replace(hour=0, minute=0, second=0)
         except ValueError:
             return await interaction.response.send_message("Invalid from_date format. Please use YYYY-MM-DD.", ephemeral=True)
