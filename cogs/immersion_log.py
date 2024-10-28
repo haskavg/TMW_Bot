@@ -4,6 +4,7 @@ from lib.vndb_autocomplete import CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CACHED
 from lib.tmdb_autocomplete import CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CACHED_TMDB_THUMBNAIL_QUERY, CACHED_TMDB_TITLE_QUERY, CREATE_TMDB_FTS5_TABLE_QUERY, CREATE_TMDB_TRIGGER_DELETE, CREATE_TMDB_TRIGGER_INSERT, CREATE_TMDB_TRIGGER_UPDATE, CACHED_TMDB_GET_MEDIA_TYPE_QUERY
 from lib.media_types import MEDIA_TYPES, LOG_CHOICES
 from .immersion_goals import check_goal_status
+from .username_fetcher import get_username_db
 
 import discord
 import os
@@ -401,6 +402,7 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.describe(media_type='Optionally specify the media type for leaderboard filtering.')
     @discord.app_commands.choices(media_type=LOG_CHOICES)
     async def log_leaderboard(self, interaction: discord.Interaction, media_type: Optional[str] = None):
+        await interaction.response.defer()
         params = (media_type, media_type) if media_type else (None, None)
         leaderboard_data = await self.bot.GET(GET_MONTHLY_LEADERBOARD_QUERY, params)
 
@@ -413,15 +415,12 @@ class ImmersionLog(commands.Cog):
 
         if leaderboard_data:
             for rank, (user_id, total_points) in enumerate(leaderboard_data, start=1):
-                user = self.bot.get_user(user_id)
-                if not user:
-                    user = await self.bot.fetch_user(user_id)
-                user_name = user.display_name if user else f"User {user_id}"
+                user_name = await get_username_db(self.bot, user_id)
                 embed.add_field(name=f"{rank}. {user_name}", value=f"{round(total_points, 2)} points", inline=True)
         else:
             embed.description = "No logs available for this month. Start immersing to be on the leaderboard!"
 
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(bot):
