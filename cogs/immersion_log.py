@@ -51,6 +51,37 @@ GET_POINTS_FOR_CURRENT_MONTH_QUERY = """
     WHERE user_id = ? AND strftime('%Y-%m', log_date) = strftime('%Y-%m', 'now');
 """
 
+GET_USER_LOGS_QUERY = """
+    SELECT log_id, media_type, media_name, amount_logged, log_date
+    FROM logs
+    WHERE user_id = ?
+    ORDER BY log_date DESC;
+"""
+
+DELETE_LOG_QUERY = """
+    DELETE FROM logs
+    WHERE log_id = ? AND user_id = ?;
+"""
+
+
+async def log_undo_autocomplete(interaction: discord.Interaction, current_input: str):
+    current_input = current_input.strip()
+
+    tmw_bot = interaction.client
+    tmw_bot: TMWBot
+
+    user_logs = await tmw_bot.GET(GET_USER_LOGS_QUERY, (interaction.user.id,))
+    choices = []
+
+    for log_id, media_type, media_name, amount_logged, log_date in user_logs:
+        unit_name = MEDIA_TYPES[media_type]['unit_name']
+        log_date_str = datetime.strptime(log_date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+        log_name = f"{media_type}: {media_name or 'N/A'} ({amount_logged} {unit_name}) on {log_date_str}"[:100]
+        if current_input.lower() in log_name.lower():
+            choices.append(discord.app_commands.Choice(name=log_name, value=str(log_id)))
+
+    return choices[:10]
+
 
 async def log_name_autocomplete(interaction: discord.Interaction, current_input: str):
     current_input = current_input.strip()
@@ -243,7 +274,8 @@ class ImmersionLog(commands.Cog):
         thumbnail_url = await self.get_thumbnail_url(media_type, name)
         source_url = await self.get_source_url(media_type, name)
 
-        embed_title = f"Logged {amount} {MEDIA_TYPES[media_type]['unit_name']}{'s' if amount > 1 else ""} of {media_type} {random_guild_emoji}"
+        embed_title = f"Logged {amount} {MEDIA_TYPES[media_type]['unit_name']}{
+            's' if amount > 1 else ""} of {media_type} {random_guild_emoji}"
         log_embed = discord.Embed(title=embed_title, color=discord.Color.random())
         log_embed.description = f"[{actual_title}]({source_url})" if source_url else actual_title
         log_embed.add_field(name="Comment", value=comment or "No comment", inline=False)
@@ -252,7 +284,8 @@ class ImmersionLog(commands.Cog):
         log_embed.add_field(name="Streak", value=f"{consecutive_days} day{'s' if consecutive_days > 1 else ''}")
         if thumbnail_url:
             log_embed.set_thumbnail(url=thumbnail_url)
-        log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {backfill_date}", icon_url=interaction.user.display_avatar.url)
+        log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {
+                             backfill_date}", icon_url=interaction.user.display_avatar.url)
 
         await interaction.followup.send(embed=log_embed)
 
@@ -304,6 +337,26 @@ class ImmersionLog(commands.Cog):
             tmdb_media_type = tmdb_media_type[0][0]
             return MEDIA_TYPES[media_type]['source_url'].format(tmdb_media_type=tmdb_media_type) + name
         return MEDIA_TYPES[media_type]['source_url'] + name
+
+    @discord.app_commands.command(name='log_undo', description='Undo a previous immersion log!')
+    @discord.app_commands.describe(log_entry='Select the log entry you want to undo.')
+    @discord.app_commands.autocomplete(log_entry=log_undo_autocomplete)
+    async def log_undo(self, interaction: discord.Interaction, log_entry: str):
+        if not log_entry.isdigit():
+            return await interaction.response.send_message("Invalid log entry selected.", ephemeral=True)
+
+        log_id = int(log_entry)
+        user_logs = await self.bot.GET(GET_USER_LOGS_QUERY, (interaction.user.id,))
+        log_ids = [log[0] for log in user_logs]
+
+        if log_id not in log_ids:
+            return await interaction.response.send_message("The selected log entry does not exist or does not belong to you.", ephemeral=True)
+
+        deleted_log_info = await self.bot.GET(GET_USER_LOGS_QUERY, (interaction.user.id,))
+        log_id, media_type, media_name, amount_logged, log_date = deleted_log_info[0]
+        log_date = datetime.strptime(log_date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+        await self.bot.RUN(DELETE_LOG_QUERY, (log_id, interaction.user.id))
+        await interaction.response.send_message(f"> {interaction.user.mention} Your log for `{amount_logged} {MEDIA_TYPES[media_type]['unit_name']}` of `{media_type}` (`{media_name if media_name else "No Name"}`) on `{log_date}` has been deleted.")
 
 
 async def setup(bot):
