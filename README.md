@@ -44,4 +44,4 @@ This bot is based on the following project (mostly used as a feature reference w
 - **tmw-utility-bot** - Licensed under the GPL-3.0 license.
   - Original source: [https://github.com/themoeway/tmw-utility-bot](https://github.com/themoeway/tmw-utility-bot)
 - **Immersionbot** - Licensed under the MIT license.
-  - Original source: [https://github.com/themoeway/Immersionbot](https://github.com/themoeway/Immersionbot)
+  - Original source: [https://github.com/themoeway/Immersionbot](https://github.com/themoeway/Immersionbot)  
