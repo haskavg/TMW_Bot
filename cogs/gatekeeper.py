@@ -298,12 +298,15 @@ class LevelUp(commands.Cog):
             server_settings['rank_settings'][member.guild.id]['announce_channel'])
         await announcement_channel.send(message)
 
-    async def already_owns_higher_or_same_role(self, rank_to_get: int, member: discord.Member):
-        rank_to_get = member.guild.get_role(rank_to_get)
-        if rank_to_get:
-            all_rank_roles = await self.get_all_quiz_roles(member.guild)
-            assigned_rank_roles = [role for role in member.roles if role in all_rank_roles]
-            if assigned_rank_roles and all_rank_roles.index(rank_to_get) <= all_rank_roles.index(assigned_rank_roles[0]):
+    async def already_owns_higher_or_same_role(self, rank_to_get_id: int, member: discord.Member):
+        role_to_get = member.guild.get_role(rank_to_get_id)
+        if not role_to_get:
+            return False
+
+        all_rank_roles = sorted(await self.get_all_quiz_roles(member.guild), key=lambda r: r.position, reverse=True)
+
+        for role in member.roles:
+            if role in all_rank_roles and role.position >= role_to_get.position:
                 return True
         return False
 
