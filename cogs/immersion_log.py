@@ -463,7 +463,8 @@ class ImmersionLog(commands.Cog):
         os.remove(log_filepath)
 
     @discord.app_commands.command(name='log_leaderboard', description='Display the leaderboard for the current month!')
-    @discord.app_commands.describe(media_type='Optionally specify the media type for leaderboard filtering.', month='Optionally specify the month in YYYY-MM format.')
+    @discord.app_commands.describe(media_type='Optionally specify the media type for leaderboard filtering.',
+                                   month='Optionally specify the month in YYYY-MM format or select all with "ALL".')
     @discord.app_commands.choices(media_type=LOG_CHOICES)
     async def log_leaderboard(self, interaction: discord.Interaction, media_type: Optional[str] = None, month: Optional[str] = None):
         await interaction.response.defer()
