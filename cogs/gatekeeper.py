@@ -261,7 +261,7 @@ class LevelUp(commands.Cog):
         deck_names = [deck['shortName'] for deck in quiz_result["decks"]]
         index_specified = bool(quiz_result["decks"][0].get("startIndex"))
         for rank in rank_structure:
-            index_required = rank["deck_range"] is not None
+            index_required = rank.get("deck_range", None) is not None
             if set(rank['decks']) == set(deck_names) and index_required == index_specified:
                 return rank
 
