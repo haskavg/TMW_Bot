@@ -189,8 +189,13 @@ class ImmersionLog(commands.Cog):
 
         if name and len(name) > 150:
             return await interaction.response.send_message("Name must be less than 150 characters.", ephemeral=True)
+        elif name:
+            name = name.strip()
+
         if comment and len(comment) > 200:
             return await interaction.response.send_message("Comment must be less than 200 characters.", ephemeral=True)
+        elif comment:
+            comment = comment.strip()
 
         if backfill_date is None:
             log_date = discord.utils.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -271,7 +276,12 @@ class ImmersionLog(commands.Cog):
             log_embed.set_thumbnail(url=thumbnail_url)
         log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {log_date.split(' ')[0]}", icon_url=interaction.user.display_avatar.url)
 
-        await interaction.followup.send(embed=log_embed)
+        logged_message = await interaction.followup.send(embed=log_embed)
+
+        if name and (name.startswith("http://") or name.startswith("https://")):
+            await logged_message.reply(f"> {name}")
+        elif comment and (comment.startswith("http://") or comment.startswith("https://")):
+            await logged_message.reply(f"> {comment}")
 
     async def get_consecutive_days_logged(self, user_id: int) -> int:
         result = await self.bot.GET(GET_CONSECUTIVE_DAYS_QUERY, (user_id,))
