@@ -264,9 +264,9 @@ class ImmersionLog(commands.Cog):
         log_embed = discord.Embed(title=embed_title, color=discord.Color.random())
         log_embed.description = f"[{actual_title}]({source_url})" if source_url else actual_title
         log_embed.add_field(name="Comment", value=comment or "No comment", inline=False)
-        log_embed.add_field(name="Points Received", value=f"+{points_received}")
+        log_embed.add_field(name="Points Received", value=f"`X`*`{round(MEDIA_TYPES[media_type]['points_multiplier'], 2)}` = `+{points_received}`")
         log_embed.add_field(name="Total Points/Month",
-                            value=f"{current_month_points_before} → {current_month_points_after}")
+                            value=f"`{current_month_points_before}` → `{current_month_points_after}`")
         log_embed.add_field(name="Streak", value=f"{consecutive_days} day{'s' if consecutive_days > 1 else ''}")
         if achievement_reached and current_achievement:
             log_embed.add_field(name="Achievement Reached! 🎉", value=current_achievement, inline=False)
