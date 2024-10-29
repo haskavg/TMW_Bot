@@ -377,7 +377,7 @@ class ImmersionLog(commands.Cog):
 
             for threshold, title in zip(ACHIEVEMENT_THRESHOLDS, ACHIEVEMENT_TITLES):
                 if total_points >= threshold:
-                    current_achievement = f"- 🎉 **Reached {achievement_group} {title} (`{round(total_points, 2)}/{threshold}` points)**"
+                    current_achievement = f"- 🎉 **Reached {achievement_group} {title} (`{threshold}` points)**"
                 else:
                     next_achievement = f"- Next: {achievement_group} {title} (`{round(total_points, 2)}/{threshold}` points)"
                     break
