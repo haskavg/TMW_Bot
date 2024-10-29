@@ -57,14 +57,15 @@ class Selfmute(commands.Cog):
     @discord.app_commands.describe(member="The user to unmute.")
     @discord.app_commands.default_permissions(administrator=True)
     async def unmute_user(self, interaction: discord.Interaction, member: discord.Member):
+        await interaction.response.defer()
         mute_data = await self.bot.GET_ONE(GET_USER_MUTE_QUERY, (interaction.guild.id, member.id))
 
         if not mute_data:
-            await interaction.response.send_message("This user was not found in the muted data. Removing muted role.", ephemeral=True)
+            await interaction.followup.send("This user was not found in the muted data. Removing muted role.", ephemeral=True)
 
         await self.perform_user_unmute(member, interaction.channel, mute_data)
         if mute_data:
-            await interaction.response.send_message(f"{member.mention} has been unmuted and roles restored when possible.", ephemeral=True)
+            await interaction.followup.send(f"{member.mention} has been unmuted and roles restored when possible.", ephemeral=True)
 
     async def perform_user_unmute(self, member: discord.Member, channel: discord.TextChannel, mute_data):
         all_self_mute_role_ids = server_settings['selfmute_config'].get(member.guild.id, {}).get("mute_roles", [])
@@ -86,23 +87,36 @@ class Selfmute(commands.Cog):
     @discord.app_commands.command(name="selfmute",  description="Mute yourself for a specified amount of time.")
     @discord.app_commands.guild_only()
     async def selfmute(self, interaction: discord.Interaction, hours: Optional[int] = 0, minutes: Optional[int] = 0):
+        await interaction.response.defer()
+
+        if hours < 0 or minutes < 0:
+            await interaction.followup.send("You can't mute yourself for a negative amount of time.", ephemeral=True)
+            return
+        if hours > 168:
+            await interaction.followup.send("You can only mute yourself for a maximum of 7 days.", ephemeral=True)
+            return
+
         all_self_mute_role_ids = server_settings['selfmute_config'].get(interaction.guild.id, {}).get("mute_roles", [])
         all_selftmute_roles = [interaction.guild.get_role(role_id) for role_id in all_self_mute_role_ids]
 
         if not all_selftmute_roles:
-            await interaction.response.send_message("This server has no selfmute roles configured.", ephemeral=True)
+            await interaction.followup.send("This server has no selfmute roles configured.", ephemeral=True)
             return
 
         if any(role in interaction.user.roles for role in all_selftmute_roles):
-            await interaction.response.send_message("You are already muted.", ephemeral=True)
+            await interaction.followup.send("You are already muted.", ephemeral=True)
             return
 
         unmute_time = discord.utils.utcnow() + timedelta(hours=hours, minutes=minutes)
 
+        if unmute_time > discord.utils.utcnow() + timedelta(days=7):
+            await interaction.followup.send("You can only mute yourself for a maximum of 7 days.", ephemeral=True)
+
         async def mute_callback(interaction: discord.Interaction):
+            await interaction.response.defer()
             mute_role = interaction.guild.get_role(int(interaction.data["values"][0]))
             await self.perform_mute(interaction.user, mute_role, unmute_time)
-            await interaction.response.send_message("You are now muted.", ephemeral=True)
+            await interaction.followup.send("You are now muted.", ephemeral=True)
             await interaction.channel.send(
                 f"**🔇 {interaction.user.mention} has been muted with {mute_role.mention} " +
                 f"until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>. 🔇\n" +
@@ -117,7 +131,7 @@ class Selfmute(commands.Cog):
 
         my_view.add_item(my_select)
         my_select.callback = mute_callback
-        await interaction.response.send_message("Select a role to mute yourself with.", view=my_view, ephemeral=True)
+        await interaction.followup.send("Select a role to mute yourself with.", view=my_view, ephemeral=True)
 
     @discord.app_commands.command(name="check_mute", description="Removes your mute if the specified time has already pasted")
     async def check_mute(self, interaction: discord.Interaction):
