@@ -81,17 +81,17 @@ GET_USER_LOGS_FOR_EXPORT_QUERY = """
 GET_MONTHLY_LEADERBOARD_QUERY = """
     SELECT user_id, SUM(points_received) AS total_points, SUM(amount_logged)
     FROM logs
-    WHERE strftime('%Y-%m', log_date) = strftime('%Y-%m', 'now')
+    WHERE (? = 'ALL' OR strftime('%Y-%m', log_date) = ?)
     AND (? IS NULL OR media_type = ?)
     GROUP BY user_id
     ORDER BY total_points DESC
-    LIMIT 20;
+    LIMIT 20
 """
 
 GET_USER_MONTHLY_POINTS_QUERY = """
     SELECT SUM(points_received) AS total_points, SUM(amount_logged)
     FROM logs
-    WHERE user_id = ? AND strftime('%Y-%m', log_date) = strftime('%Y-%m', 'now')
+    WHERE user_id = ? AND (? = 'ALL' OR strftime('%Y-%m', log_date) = ?)
     AND (? IS NULL OR media_type = ?);
 """
 
@@ -463,15 +463,24 @@ class ImmersionLog(commands.Cog):
         os.remove(log_filepath)
 
     @discord.app_commands.command(name='log_leaderboard', description='Display the leaderboard for the current month!')
-    @discord.app_commands.describe(media_type='Optionally specify the media type for leaderboard filtering.')
+    @discord.app_commands.describe(media_type='Optionally specify the media type for leaderboard filtering.', month='Optionally specify the month in YYYY-MM format.')
     @discord.app_commands.choices(media_type=LOG_CHOICES)
-    async def log_leaderboard(self, interaction: discord.Interaction, media_type: Optional[str] = None):
+    async def log_leaderboard(self, interaction: discord.Interaction, media_type: Optional[str] = None, month: Optional[str] = None):
         await interaction.response.defer()
-        leaderboard_data = await self.bot.GET(GET_MONTHLY_LEADERBOARD_QUERY, (media_type, media_type))
-        user_data = await self.bot.GET(GET_USER_MONTHLY_POINTS_QUERY, (interaction.user.id, media_type, media_type))
+
+        if not month:
+            month = discord.utils.utcnow().strftime('%Y-%m')
+        elif month != 'ALL':
+            try:
+                datetime.strptime(month, '%Y-%m').strftime('%Y-%m')
+            except ValueError:
+                return await interaction.followup.send("Invalid month format. Please use YYYY-MM.", ephemeral=True)
+
+        leaderboard_data = await self.bot.GET(GET_MONTHLY_LEADERBOARD_QUERY, (month, month, media_type, media_type))
+        user_data = await self.bot.GET(GET_USER_MONTHLY_POINTS_QUERY, (interaction.user.id, month, month, media_type, media_type))
 
         embed = discord.Embed(
-            title=f"Immersion Leaderboard - {discord.utils.utcnow().strftime('%B %Y')}",
+            title=f"Immersion Leaderboard - {(datetime.strptime(month, '%Y-%m').strftime('%B %Y') if month != 'ALL' else 'All Time')}",
             color=discord.Color.blue()
         )
         if media_type:
