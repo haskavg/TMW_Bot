@@ -359,7 +359,6 @@ rank_settings:
       - 1027717683199873075 # Quiz-3
       - 1184238092853456986 # Quiz-4
       - 1184238116740014170 # Quiz-5
-      - 1124491277912772658 # Quiz-Public
     restricted_quiz_names:
       - "jpdb1k"
       - "jpdb2_5k"
