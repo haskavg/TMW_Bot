@@ -79,13 +79,20 @@ GET_USER_LOGS_FOR_EXPORT_QUERY = """
 """
 
 GET_MONTHLY_LEADERBOARD_QUERY = """
-    SELECT user_id, SUM(points_received) AS total_points
+    SELECT user_id, SUM(points_received) AS total_points, SUM(amount_logged)
     FROM logs
     WHERE strftime('%Y-%m', log_date) = strftime('%Y-%m', 'now')
     AND (? IS NULL OR media_type = ?)
     GROUP BY user_id
     ORDER BY total_points DESC
     LIMIT 20;
+"""
+
+GET_USER_MONTHLY_POINTS_QUERY = """
+    SELECT SUM(points_received) AS total_points, SUM(amount_logged)
+    FROM logs
+    WHERE user_id = ? AND strftime('%Y-%m', log_date) = strftime('%Y-%m', 'now')
+    AND (? IS NULL OR media_type = ?);
 """
 
 ACHIEVEMENT_THRESHOLDS = [1, 100, 300, 1000, 2000, 10000, 25000, 100000]
@@ -415,8 +422,8 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.choices(media_type=LOG_CHOICES)
     async def log_leaderboard(self, interaction: discord.Interaction, media_type: Optional[str] = None):
         await interaction.response.defer()
-        params = (media_type, media_type) if media_type else (None, None)
-        leaderboard_data = await self.bot.GET(GET_MONTHLY_LEADERBOARD_QUERY, params)
+        leaderboard_data = await self.bot.GET(GET_MONTHLY_LEADERBOARD_QUERY, (media_type, media_type))
+        user_data = await self.bot.GET(GET_USER_MONTHLY_POINTS_QUERY, (interaction.user.id, media_type, media_type))
 
         embed = discord.Embed(
             title=f"Immersion Leaderboard - {discord.utils.utcnow().strftime('%B %Y')}",
@@ -424,14 +431,31 @@ class ImmersionLog(commands.Cog):
         )
         if media_type:
             embed.title += f" for {media_type}"
-
+        unit_name = MEDIA_TYPES[media_type]['unit_name'] if media_type else None
+        user_in_top_20 = False
         if leaderboard_data:
-            for rank, (user_id, total_points) in enumerate(leaderboard_data, start=1):
+            for rank, (user_id, total_points, total_logged) in enumerate(leaderboard_data, start=1):
                 user_name = await get_username_db(self.bot, user_id)
-                embed.add_field(name=f"{rank}. {user_name}", value=f"{round(total_points, 2)} points", inline=True)
+                if interaction.user.id == user_id:
+                    embed.add_field(name=f"**{rank}. {user_name} (YOU)**", value=f"**{round(total_points, 2)} points**" +
+                                    (f"\n**{total_logged} {unit_name}s**" if unit_name else ""), inline=True)
+                    user_in_top_20 = True
+                else:
+                    embed.add_field(name=f"{rank}. {user_name}", value=f"{round(total_points, 2)} points" +
+                                    (f"\n{total_logged} {unit_name}s" if unit_name else ""), inline=True)
         else:
             embed.description = "No logs available for this month. Start immersing to be on the leaderboard!"
 
+        if not user_in_top_20 and user_data and user_data[0] and user_data[0][0]:
+            user_points = round(user_data[0][0], 2)
+            user_logged = round(user_data[0][1], 2)
+            user_name = await get_username_db(self.bot, interaction.user.id)
+            embed.add_field(name=f"**You**", value=f"**{user_points} points**" +
+                            (f"\n{user_logged} {unit_name}s" if unit_name else ""), inline=True)
+        elif user_in_top_20:
+            embed.add_field(name=f"**---**", value=f" ", inline=True)
+        else:
+            embed.add_field(name=f"**You**", value="**0 points**", inline=True)
         await interaction.followup.send(embed=embed)
 
 
