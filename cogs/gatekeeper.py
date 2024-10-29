@@ -262,8 +262,10 @@ class LevelUp(commands.Cog):
         index_specified = bool(quiz_result["decks"][0].get("startIndex"))
         for rank in rank_structure:
             index_required = rank.get("deck_range", None) is not None
-            if set(rank['decks']) == set(deck_names) and index_required == index_specified:
+            rank_decks = set(rank["decks"]) if rank.get("decks") is not None else set()
+            if rank_decks == set(deck_names) and index_required == index_specified:
                 return rank
+        return None
 
     async def get_all_quiz_roles(self, guild: discord.Guild):
         rank_structure = server_settings['rank_structure'][guild.id]
@@ -332,6 +334,9 @@ class LevelUp(commands.Cog):
 
         quiz_result = await extract_quiz_result_from_id(quiz_id)
         quiz_data = await self.get_corresponding_quiz_data(message, quiz_result)
+        if not quiz_data:
+            return
+
         member = message.guild.get_member(int(quiz_result["participants"][0]["discordUser"]["id"]))
 
         success, quiz_message = await verify_quiz_settings(quiz_data, quiz_result, member)
