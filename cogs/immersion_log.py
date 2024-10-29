@@ -259,12 +259,19 @@ class ImmersionLog(commands.Cog):
         thumbnail_url = await self.get_thumbnail_url(media_type, name)
         source_url = await self.get_source_url(media_type, name)
 
+        if MEDIA_TYPES[media_type]['points_multiplier'] < 1:
+            needed_for_one = int(round(1 / MEDIA_TYPES[media_type]['points_multiplier'], 2))
+            points_received_str = f"`+{points_received}` (X/{needed_for_one})"
+        else:
+            received_for_one = int(round(MEDIA_TYPES[media_type]['points_multiplier'], 2))
+            points_received_str = f"`+{points_received}` (X*{received_for_one})"
+
         embed_title = f"Logged {amount} {MEDIA_TYPES[media_type]['unit_name']}{
             's' if amount > 1 else ""} of {media_type} {random_guild_emoji}"
         log_embed = discord.Embed(title=embed_title, color=discord.Color.random())
         log_embed.description = f"[{actual_title}]({source_url})" if source_url else actual_title
         log_embed.add_field(name="Comment", value=comment or "No comment", inline=False)
-        log_embed.add_field(name="Points Received", value=f"`X`*`{round(MEDIA_TYPES[media_type]['points_multiplier'], 3)}` = `+{points_received}`")
+        log_embed.add_field(name="Points Received", value=points_received_str)
         log_embed.add_field(name="Total Points/Month",
                             value=f"`{current_month_points_before}` → `{current_month_points_after}`")
         log_embed.add_field(name="Streak", value=f"{consecutive_days} day{'s' if consecutive_days > 1 else ''}")
