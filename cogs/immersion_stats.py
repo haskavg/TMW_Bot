@@ -58,7 +58,7 @@ class ImmersionLogMe(commands.Cog):
         breakdown['unit_name'] = breakdown['media_type'].apply(lambda x: MEDIA_TYPES[x]['unit_name'])
 
         breakdown_str = "\n".join([
-            f"{row['media_type']}: {row['amount_logged']} {row['unit_name']}{'s' if row['amount_logged'] > 1 else ''} → {row['points_received']} pts"
+            f"{row['media_type']}: {row['amount_logged']} {row['unit_name']}{'s' if row['amount_logged'] > 1 else ''} → {round(row['points_received'], 2)} pts"
             for _, row in breakdown.iterrows()
         ])
 
