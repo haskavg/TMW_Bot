@@ -40,10 +40,10 @@ CREATE_LOG_QUERY = """
 """
 
 GET_CONSECUTIVE_DAYS_QUERY = """
-    SELECT log_date
+    SELECT DISTINCT(DATE(log_date)) AS log_date
     FROM logs
     WHERE user_id = ?
-    GROUP BY log_date
+    GROUP BY DATE(log_date)
     ORDER BY log_date DESC;
 """
 
@@ -280,7 +280,7 @@ class ImmersionLog(commands.Cog):
         today = discord.utils.utcnow().date()
 
         for row in result:
-            log_date = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S').date()
+            log_date = datetime.strptime(row[0], '%Y-%m-%d').date()
             if log_date == today - timedelta(days=consecutive_days):
                 consecutive_days += 1
             else:
