@@ -185,13 +185,13 @@ rank_structure:
       effect: null
       time_limit: 16000
       decks:
-        - "n4"
+        - "n5"
       deck_range:
         - 1
-        - 300
+        - 100
       score_limit: 1
       max_missed: 10
-      command: "k!quiz n4(1-300) 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      command: "k!quiz n5(1-100) 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
       no_timeout: true
 
     - name: "Trainee"
