@@ -133,9 +133,11 @@ async def log_name_autocomplete(interaction: discord.Interaction, current_input:
     return []
 
 
-def is_valid_channel(interaction: discord.Interaction) -> bool:
+async def is_valid_channel(interaction: discord.Interaction) -> bool:
     if interaction.channel.id in server_settings['immersion_bot']['allowed_log_channels']:
         return True
+    if not interaction.user.dm_channel:
+        await interaction.client.create_dm(interaction.user)
     if interaction.channel == interaction.user.dm_channel:
         return True
     return False
@@ -174,7 +176,7 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.choices(media_type=LOG_CHOICES)
     @discord.app_commands.autocomplete(name=log_name_autocomplete)
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str], backfill_date: Optional[str]):
-        if not is_valid_channel(interaction):
+        if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
         if not amount.isdigit():
             return await interaction.response.send_message("Amount must be a valid number.", ephemeral=True)

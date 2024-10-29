@@ -102,6 +102,8 @@ class Kneels(commands.Cog):
         if user and user.display_name != current_user_name:
             await self.bot.RUN(UPDATE_USERNAME_QUERY, (user.display_name, user_id))
             return user.display_name
+        elif user and user.display_name == current_user_name:
+            return current_user_name
         elif not user and current_user_name:
             return current_user_name
         else:
