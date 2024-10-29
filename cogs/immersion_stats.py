@@ -90,8 +90,11 @@ class ImmersionLogMe(commands.Cog):
         user_id = user.id if user else interaction.user.id
         user_name = await get_username_db(self.bot, user_id)
         try:
-            from_date = datetime.strptime(from_date, '%Y-%m-%d') if from_date else discord.utils.utcnow() - timedelta(days=30)
-            from_date = from_date.replace(hour=0, minute=0, second=0)
+            if from_date:
+                from_date = datetime.strptime(from_date, '%Y-%m-%d')
+            else:
+                now = datetime.now()
+                from_date = now.replace(day=1, hour=0, minute=0, second=0)
         except ValueError:
             return await interaction.followup.send("Invalid from_date format. Please use YYYY-MM-DD.", ephemeral=True)
 
