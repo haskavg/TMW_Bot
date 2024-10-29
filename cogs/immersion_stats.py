@@ -29,7 +29,7 @@ class ImmersionLogMe(commands.Cog):
 
     @discord.app_commands.command(name='log_stats', description='Display an immersion overview for a specified period.')
     @discord.app_commands.describe(user='Optional user to display the immersion overview for.', from_date='Optional start date (YYYY-MM-DD).', to_date='Optional end date (YYYY-MM-DD).')
-    async def log_me(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None):
+    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None):
         user_id = user.id if user else interaction.user.id
         user_name = await get_username_db(self.bot, user_id)
         try:
