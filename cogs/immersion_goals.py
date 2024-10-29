@@ -185,14 +185,19 @@ class GoalsCog(commands.Cog):
             return await interaction.response.send_message(f"> {member.display_name} has no active goals.", ephemeral=True)
 
         embed = discord.Embed(title=f"{member.display_name}'s Goals", color=discord.Color.blue())
+        fields_added = 0
+
         for media_type in MEDIA_TYPES.keys():
             goal_statuses = await check_goal_status(self.bot, member.id, media_type)
             for i, goal_status in enumerate(goal_statuses):
-                if i < 24:
-                    embed.add_field(name=f"Goal {i+1}", value=goal_status, inline=False)
+                if fields_added < 24:
+                    embed.add_field(name=f"Goal {fields_added + 1}", value=goal_status, inline=False)
+                    fields_added += 1
                 else:
                     embed.add_field(name="Notice", value="You have reached the maximum number of fields. Please clear some of your goals to view more.", inline=False)
                     break
+            if fields_added >= 24:
+                break
 
         await interaction.response.send_message(embed=embed)
 
