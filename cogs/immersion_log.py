@@ -369,14 +369,24 @@ class ImmersionLog(commands.Cog):
     async def log_achievements(self, interaction: discord.Interaction):
         user_id = interaction.user.id
         achievements_list = []
+
         for achievement_group in set(settings_group['Achievement_Group'] for settings_group in MEDIA_TYPES.values()):
             total_points = await self.get_total_points_for_achievement_group(user_id, achievement_group)
+            current_achievement = None
+            next_achievement = None
+
             for threshold, title in zip(ACHIEVEMENT_THRESHOLDS, ACHIEVEMENT_TITLES):
                 if total_points >= threshold:
-                    achievements_list.append(f"- {achievement_group} {title} - {threshold} points")
+                    current_achievement = f"- 🎉 **Reached {achievement_group} {title} (`{total_points}/{threshold}` points)**"
                 else:
+                    next_achievement = f"- Next: {achievement_group} {title} (`{total_points}/{threshold}` points)"
                     break
 
+            if current_achievement:
+                achievements_list.append(current_achievement)
+            if next_achievement:
+                achievements_list.append(next_achievement)
+            achievements_list.append("\n---------\n")
         if achievements_list:
             achievements_str = "\n".join(achievements_list)
         else:
