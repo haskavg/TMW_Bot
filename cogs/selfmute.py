@@ -76,6 +76,7 @@ class Selfmute(commands.Cog):
         guild_id, user_id, mute_role_id, role_ids_to_restore, _ = mute_data
         if role_ids_to_restore:
             roles_to_restore = [member.guild.get_role(int(role_id)) for role_id in role_ids_to_restore.split(",")]
+            roles_to_restore = [role for role in roles_to_restore if role]
             roles_to_restore = [role for role in roles_to_restore if not role.is_default(
             ) and not role.is_premium_subscriber() and role.is_assignable()]
             await member.add_roles(*roles_to_restore)
