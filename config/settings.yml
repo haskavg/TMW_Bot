@@ -29,7 +29,7 @@ rank_structure:
       decks:
         - "jpdb1k"
       deck_range: null
-      score_limit: 5
+      score_limit: 50
       max_missed: 10
       command: "k!quiz jpdb1k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
       no_timeout: false
