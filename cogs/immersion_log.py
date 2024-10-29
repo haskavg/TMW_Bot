@@ -427,6 +427,34 @@ class ImmersionLog(commands.Cog):
         await interaction.response.send_message("Here are the immersion logs:", file=discord.File(csv_filepath))
         os.remove(csv_filepath)
 
+    @discord.app_commands.command(name='logs', description='Output your immersion logs as a text file!')
+    @discord.app_commands.describe(user='The user to export logs for (optional)')
+    async def logs(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
+        interaction.response.defer()
+        user_id = user.id if user else interaction.user.id
+        user_logs = await self.bot.GET(GET_USER_LOGS_FOR_EXPORT_QUERY, (user_id,))
+
+        if not user_logs:
+            return await interaction.followup.send("No logs to export for the specified user.", ephemeral=True)
+
+        log_filename = f"immersion_logs_{user_id}.txt"
+        log_filepath = os.path.join("/tmp", log_filename)
+        # log_id, media_type, media_name, comment, amount_logged, points_received, log_date
+        with open(log_filepath, mode='w', encoding='utf-8') as log_file:
+            for log in user_logs:
+                log_date = datetime.strptime(log[6], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+                media_type = log[1]
+                media_name = log[2] or 'N/A'
+                amount_logged = log[4]
+                unit_name = MEDIA_TYPES[media_type]['unit_name'] + 's' if amount_logged > 1 else MEDIA_TYPES[media_type]['unit_name']
+                comment = log[3] or 'No comment'
+
+                log_entry = f"{log_date}: {media_type} ({media_name}) -> {amount_logged} {unit_name} | {comment}\n"
+                log_file.write(log_entry)
+
+        await interaction.response.send_message("Here are your immersion logs:", file=discord.File(log_filepath))
+        os.remove(log_filepath)
+
     @discord.app_commands.command(name='log_leaderboard', description='Display the leaderboard for the current month!')
     @discord.app_commands.describe(media_type='Optionally specify the media type for leaderboard filtering.')
     @discord.app_commands.choices(media_type=LOG_CHOICES)
