@@ -120,7 +120,7 @@ async def verify_quiz_settings(quiz_data, quiz_result, member: discord.Member):
     if answer_count != quiz_result["settings"]["scoreLimit"]:
         return False, "Set score limit and required score limit don't match."
 
-    if answer_time_limit != quiz_result["settings"]["answerTimeLimitInMs"]:
+    if answer_time_limit < quiz_result["settings"]["answerTimeLimitInMs"]:
         return False, "Set answer time does match required answer time."
 
     if font and font != quiz_result["settings"]["font"]:
