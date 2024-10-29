@@ -53,6 +53,9 @@ class Resolver(commands.Cog):
         new_thread_name = "[SOLVED] " + \
             interaction.channel.name if not "[SOLVED]" in interaction.channel.name else interaction.channel.name
 
+        if len(new_thread_name) > 100:
+            new_thread_name = new_thread_name[:97] + "..."
+
         await interaction.channel.edit(reason=f'Marked as solved by {interaction.user}', name=new_thread_name, archived=True)
 
     async def ask_if_solved_for_guild(self, guild: discord.Guild):
