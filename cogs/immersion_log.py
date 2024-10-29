@@ -267,7 +267,7 @@ class ImmersionLog(commands.Cog):
 
         if thumbnail_url:
             log_embed.set_thumbnail(url=thumbnail_url)
-        log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {backfill_date}", icon_url=interaction.user.display_avatar.url)
+        log_embed.set_footer(text=f"Logged by {interaction.user.display_name} for {log_date.split(' ')[0]}", icon_url=interaction.user.display_avatar.url)
 
         await interaction.followup.send(embed=log_embed)
 
