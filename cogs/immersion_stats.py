@@ -11,7 +11,8 @@ from lib.media_types import MEDIA_TYPES
 from lib.bot import TMWBot
 
 from .username_fetcher import get_username_db
-
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 import io
@@ -44,6 +45,31 @@ def process_logs(logs):
         log_dict[log[0]][log_date.date()] += log[2]
 
     df_plot = pd.DataFrame(log_dict).fillna(0)
+    df_plot.index = pd.to_datetime(df_plot.index)
+
+    full_date_range = pd.date_range(start=df_plot.index.min(), end=df_plot.index.max())
+    df_plot = df_plot.reindex(full_date_range, fill_value=0)
+
+    if len(df_plot) > 365 * 2:
+        df_plot = df_plot.resample('QE').sum()
+
+        def format_quarters(date):
+            quarter = (date.month - 1) // 3 + 1
+            return f"{date.year}-Q{quarter}"
+
+        x_lab = " (year-quarter)"
+        date_labels = df_plot.index.map(format_quarters)
+    elif len(df_plot) > 30 * 7:
+        df_plot = df_plot.resample('ME').sum()
+        x_lab = " (year-mounth)"
+        date_labels = df_plot.index.strftime("%Y-%m")
+    elif len(df_plot) > 30:
+        df_plot = df_plot.resample('W').sum()
+        x_lab = " (year-week)"
+        date_labels = df_plot.index.strftime("%Y-%W")
+    else:
+        date_labels = df_plot.index.strftime("%Y-%m-%d")
+        x_lab = ""
 
     color_dict = {
         "Book": "tab:orange",
@@ -58,16 +84,15 @@ def process_logs(logs):
     fig, ax = plt.subplots(figsize=(16, 12))
     plt.title('Points Over Time', fontweight='bold', fontsize=20)
     plt.ylabel('Points', fontweight='bold', fontsize=14)
-    plt.xlabel('Date', fontweight='bold', fontsize=14)
+    plt.xlabel('Date' + x_lab, fontweight='bold', fontsize=14)
 
-    accumulator = 0
-    for media_type in df_plot.columns:
-        col = df_plot[media_type]
-        ax.bar(df_plot.index, col, bottom=accumulator, color=color_dict.get(media_type, 'gray'), label=media_type)
-        accumulator += col
+    # Plot the data as a stacked bar chart
+    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
 
-    ax.legend(df_plot.columns)
-    plt.xticks(df_plot.index, fontsize=10, rotation=45, horizontalalignment='right')
+    # Set custom x-axis labels based on the determined date format
+    ax.set_xticklabels(date_labels)
+    plt.xticks(rotation=45, ha='right')
+    plt.legend(loc='best')
     plt.grid()
 
     # Save the plot to a buffer
