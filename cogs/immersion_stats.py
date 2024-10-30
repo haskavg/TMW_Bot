@@ -45,6 +45,31 @@ def process_logs(logs):
         log_dict[log[0]][log_date.date()] += log[2]
 
     df_plot = pd.DataFrame(log_dict).fillna(0)
+    df_plot.index = pd.to_datetime(df_plot.index)
+
+    full_date_range = pd.date_range(start=df_plot.index.min(), end=df_plot.index.max())
+    df_plot = df_plot.reindex(full_date_range, fill_value=0)
+
+    if len(df_plot) > 365 * 2:
+        df_plot = df_plot.resample('QE').sum()
+
+        def format_quarters(date):
+            quarter = (date.month - 1) // 3 + 1
+            return f"{date.year}-Q{quarter}"
+
+        x_lab = " (year-quarter)"
+        date_labels = df_plot.index.map(format_quarters)
+    elif len(df_plot) > 30 * 7:
+        df_plot = df_plot.resample('ME').sum()
+        x_lab = " (year-mounth)"
+        date_labels = df_plot.index.strftime("%Y-%m")
+    elif len(df_plot) > 30:
+        df_plot = df_plot.resample('W').sum()
+        x_lab = " (year-week)"
+        date_labels = df_plot.index.strftime("%Y-%W")
+    else:
+        date_labels = df_plot.index.strftime("%Y-%m-%d")
+        x_lab = ""
 
     color_dict = {
         "Book": "tab:orange",
