@@ -117,6 +117,7 @@ class Kneels(commands.Cog):
                     return 'Unknown User'
 
     @discord.app_commands.command(name="kneelderboard", description="ikneel")
+    @discord.app_commands.guild_only()
     async def kneel_leaderboard(self, interaction: discord.Interaction, guild_id: Optional[str] = None):
         if guild_id and not guild_id.isdigit():
             await interaction.response.send("Invalid command input", ephemeral=True)
