@@ -85,9 +85,14 @@ class TMWBot(commands.Bot):
 
         error_embed = discord.Embed(title="Error", description=f"```{str(error)[:4000]}```", color=discord.Color.red())
 
-        await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: {interaction.channel.name} | Guild: {interaction.guild.name}\n"
-                                 f"Data: ```json\n{interaction.data}```",
-                                 embed=error_embed)
+        if interaction.channel.type == discord.ChannelType.private:
+            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: private\n"
+                                     f"Data: ```json\n{interaction.data}```",
+                                     embed=error_embed)
+        else:
+            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: {interaction.channel.name} | Guild: {interaction.guild.name}\n"
+                                     f"Data: ```json\n{interaction.data}```",
+                                     embed=error_embed)
 
         if not interaction.response.is_done():
             await interaction.response.send_message("An error occurred while processing your command:", embed=error_embed)
