@@ -6,8 +6,6 @@ import sys
 import traceback
 from discord.ext import commands
 
-DEBUG_USER_ID = int(os.getenv("DEBUG_USER"))
-
 _log = logging.getLogger(__name__)
 
 
@@ -41,9 +39,10 @@ class TMWBot(commands.Bot):
 
     async def create_debug_dm(self):
         await self.wait_until_ready()
-        debug_user = self.get_user(DEBUG_USER_ID)
+        debug_user_id = int(os.getenv("DEBUG_USER"))
+        debug_user = self.get_user(debug_user_id)
         if not debug_user:
-            debug_user = await self.fetch_user(DEBUG_USER_ID)
+            debug_user = await self.fetch_user(debug_user_id)
 
         self.debug_dm = debug_user.dm_channel
         if not debug_user.dm_channel:
@@ -85,9 +84,14 @@ class TMWBot(commands.Bot):
 
         error_embed = discord.Embed(title="Error", description=f"```{str(error)[:4000]}```", color=discord.Color.red())
 
-        await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: {interaction.channel.name} | Guild: {interaction.guild.name}\n"
-                                 f"Data: ```json\n{interaction.data}```",
-                                 embed=error_embed)
+        if interaction.channel.type == discord.ChannelType.private:
+            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: private | User: {interaction.user.id} ({interaction.user.name})  \n"
+                                     f"Data: ```json\n{interaction.data}```",
+                                     embed=error_embed)
+        else:
+            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: {interaction.channel.name} | Guild: {interaction.guild.name}\n"
+                                     f"Data: ```json\n{interaction.data}```",
+                                     embed=error_embed)
 
         if not interaction.response.is_done():
             await interaction.response.send_message("An error occurred while processing your command:", embed=error_embed)

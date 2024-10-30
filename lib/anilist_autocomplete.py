@@ -12,6 +12,7 @@ query ($search: String, $type: MediaType) {
       id
       title {
         english
+        romaji
         native
       }
       coverImage {
@@ -27,6 +28,7 @@ query ($id: Int) {
     id
     title {
       english
+      romaji
       native
     }
     coverImage {
@@ -149,7 +151,7 @@ async def query_anilist(interaction: discord.Interaction, current_input: str, bo
                 choices = []
                 for media in media_list:
                     media_id = media.get("id")
-                    title_english = media.get("title", {}).get("english")
+                    title_english = media.get("title", {}).get("english") or media.get("title", {}).get("romaji")
                     title_native = media.get("title", {}).get("native")
                     cover_image_url = media.get("coverImage", {}).get("medium")
                     title = title_english or title_native
