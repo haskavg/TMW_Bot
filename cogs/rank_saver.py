@@ -74,7 +74,7 @@ class RankSaver(commands.Cog):
                 if not to_restore_channel:
                     return
                 await to_restore_channel.send(
-                    f"**Rejoin:** Restored **{', '.join([role.mention for role in assignable_roles])}** for {member.mention}.",
+                    f"**{member.mention} Rejoined:** Restored the following roles: **{', '.join([role.mention for role in assignable_roles])}**",
                     allowed_mentions=discord.AllowedMentions.none()
                 )
 
