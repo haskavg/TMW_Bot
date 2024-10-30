@@ -11,7 +11,8 @@ from lib.media_types import MEDIA_TYPES
 from lib.bot import TMWBot
 
 from .username_fetcher import get_username_db
-
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 import io
