@@ -271,7 +271,6 @@ class ImmersionLog(commands.Cog):
             f"{'s' if amount > 1 else ''} of {media_type} {random_guild_emoji}"
         )
 
-
         log_embed = discord.Embed(title=embed_title, color=discord.Color.random())
         log_embed.description = f"[{actual_title}]({source_url})" if source_url else actual_title
         log_embed.add_field(name="Comment", value=comment or "No comment", inline=False)
@@ -373,7 +372,6 @@ class ImmersionLog(commands.Cog):
             f"of `{media_type}` (`{media_name or 'No Name'}`) on `{log_date}` has been deleted."
         )
 
-
     async def get_total_points_for_achievement_group(self, user_id: int, achievement_group: str) -> float:
         result = await self.bot.GET(GET_TOTAL_POINTS_FOR_ACHIEVEMENT_GROUP_QUERY, (user_id, achievement_group))
         if result and result[0] and result[0][0] is not None:
@@ -445,7 +443,7 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.command(name='logs', description='Output your immersion logs as a text file!')
     @discord.app_commands.describe(user='The user to export logs for (optional)')
     async def logs(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
-        interaction.response.defer()
+        await interaction.response.defer()
         user_id = user.id if user else interaction.user.id
         user_logs = await self.bot.GET(GET_USER_LOGS_FOR_EXPORT_QUERY, (user_id,))
 
@@ -467,7 +465,7 @@ class ImmersionLog(commands.Cog):
                 log_entry = f"{log_date}: {media_type} ({media_name}) -> {amount_logged} {unit_name} | {comment}\n"
                 log_file.write(log_entry)
 
-        await interaction.response.send_message("Here are your immersion logs:", file=discord.File(log_filepath))
+        await interaction.followup.send("Here are your immersion logs:", file=discord.File(log_filepath))
         os.remove(log_filepath)
 
     @discord.app_commands.command(name='log_leaderboard', description='Display the leaderboard for the current month!')
