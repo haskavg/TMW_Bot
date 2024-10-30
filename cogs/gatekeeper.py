@@ -371,13 +371,16 @@ class LevelUp(commands.Cog):
     @discord.app_commands.guild_only()
     async def ranktable(self, interaction: discord.Interaction):
         quiz_roles = await self.get_all_quiz_roles(interaction.guild)
-        description = "\n".join([f"{role.mention}: {len(role.members)} ({len(
-            role.members) / interaction.guild.member_count * 100:.2f}%)" for role in quiz_roles])
+        description = "\n".join([
+            f"{role.mention}: {len(role.members)} ({len(role.members) / interaction.guild.member_count * 100:.2f}%)"
+            for role in quiz_roles
+        ])
 
         description += f"\n\nTotal member count: {interaction.guild.member_count}"
 
         embed = discord.Embed(title=f"Role Distribution", description=description, color=discord.Color.blurple())
         await interaction.response.send_message(embed=embed, allowed_mentions=discord.AllowedMentions.none())
+
 
     @discord.app_commands.command(name="rankusers", description="See all users with a specific role.")
     @discord.app_commands.describe(role="Role for which all members should be displayed.")
