@@ -5,6 +5,8 @@ from discord.ext import commands
 from lib.bot import TMWBot
 from lib.media_types import LOG_CHOICES, MEDIA_TYPES
 
+from lib.immersion_helpers import is_valid_channel
+
 from typing import Optional
 
 CREATE_USER_GOALS_TABLE = """
@@ -131,6 +133,8 @@ class GoalsCog(commands.Cog):
         discord.app_commands.Choice(name='Amount', value='amount')],
         media_type=LOG_CHOICES)
     async def log_set_goal(self, interaction: discord.Interaction, media_type: str, goal_type: str, goal_value: int, end_date_or_hours: str):
+        if not await is_valid_channel(interaction):
+            return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
         try:
             if end_date_or_hours.isdigit():
                 hours = int(end_date_or_hours)

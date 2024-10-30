@@ -3,6 +3,7 @@ from lib.anilist_autocomplete import CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, 
 from lib.vndb_autocomplete import CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CACHED_VNDB_THUMBNAIL_QUERY, CACHED_VNDB_TITLE_QUERY, CREATE_VNDB_FTS5_TABLE_QUERY, CREATE_VNDB_TRIGGER_DELETE, CREATE_VNDB_TRIGGER_INSERT, CREATE_VNDB_TRIGGER_UPDATE
 from lib.tmdb_autocomplete import CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CACHED_TMDB_THUMBNAIL_QUERY, CACHED_TMDB_TITLE_QUERY, CREATE_TMDB_FTS5_TABLE_QUERY, CREATE_TMDB_TRIGGER_DELETE, CREATE_TMDB_TRIGGER_INSERT, CREATE_TMDB_TRIGGER_UPDATE, CACHED_TMDB_GET_MEDIA_TYPE_QUERY
 from lib.media_types import MEDIA_TYPES, LOG_CHOICES
+from lib.immersion_helpers import is_valid_channel
 from .immersion_goals import check_goal_status
 from .username_fetcher import get_username_db
 
@@ -140,16 +141,6 @@ async def log_name_autocomplete(interaction: discord.Interaction, current_input:
     return []
 
 
-async def is_valid_channel(interaction: discord.Interaction) -> bool:
-    if interaction.channel.id in server_settings['immersion_bot']['allowed_log_channels']:
-        return True
-    if not interaction.user.dm_channel:
-        await interaction.client.create_dm(interaction.user)
-    if interaction.channel == interaction.user.dm_channel:
-        return True
-    return False
-
-
 class ImmersionLog(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
@@ -185,6 +176,7 @@ class ImmersionLog(commands.Cog):
     async def log(self, interaction: discord.Interaction, media_type: str, amount: str, name: Optional[str], comment: Optional[str], backfill_date: Optional[str]):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
+
         if not amount.isdigit():
             return await interaction.response.send_message("Amount must be a valid number.", ephemeral=True)
         amount = int(amount)
@@ -353,6 +345,9 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.describe(log_entry='Select the log entry you want to undo.')
     @discord.app_commands.autocomplete(log_entry=log_undo_autocomplete)
     async def log_undo(self, interaction: discord.Interaction, log_entry: str):
+        if not await is_valid_channel(interaction):
+            return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
+
         if not log_entry.isdigit():
             return await interaction.response.send_message("Invalid log entry selected.", ephemeral=True)
 
@@ -380,6 +375,9 @@ class ImmersionLog(commands.Cog):
 
     @discord.app_commands.command(name='log_achievements', description='Display all your achievements!')
     async def log_achievements(self, interaction: discord.Interaction):
+        if not await is_valid_channel(interaction):
+            return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
+
         user_id = interaction.user.id
         achievements_list = []
 
@@ -412,6 +410,9 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.command(name='log_export', description='Export immersion logs as a CSV file! Optionally, specify a user ID to export their logs.')
     @discord.app_commands.describe(user='The user to export logs for (optional)')
     async def log_export(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
+        if not await is_valid_channel(interaction):
+            return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
+
         user_id = user.id if user else interaction.user.id
         user_logs = await self.bot.GET(GET_USER_LOGS_FOR_EXPORT_QUERY, (user_id,))
 
@@ -443,6 +444,9 @@ class ImmersionLog(commands.Cog):
     @discord.app_commands.command(name='logs', description='Output your immersion logs as a text file!')
     @discord.app_commands.describe(user='The user to export logs for (optional)')
     async def logs(self, interaction: discord.Interaction, user: Optional[discord.User] = None):
+        if not await is_valid_channel(interaction):
+            return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
+
         await interaction.response.defer()
         user_id = user.id if user else interaction.user.id
         user_logs = await self.bot.GET(GET_USER_LOGS_FOR_EXPORT_QUERY, (user_id,))
@@ -473,6 +477,9 @@ class ImmersionLog(commands.Cog):
                                    month='Optionally specify the month in YYYY-MM format or select all with "ALL".')
     @discord.app_commands.choices(media_type=LOG_CHOICES)
     async def log_leaderboard(self, interaction: discord.Interaction, media_type: Optional[str] = None, month: Optional[str] = None):
+        if not await is_valid_channel(interaction):
+            return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
+
         await interaction.response.defer()
 
         if not month:
