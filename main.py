@@ -4,10 +4,10 @@ import asyncio
 import argparse
 from dotenv import load_dotenv
 
+load_dotenv()
 from discord.ext import commands
 from lib.bot import TMWBot
 
-load_dotenv()
 
 COMMAND_PREFIX = os.getenv("COMMAND_PREFIX")
 TOKEN = os.getenv("TOKEN")
