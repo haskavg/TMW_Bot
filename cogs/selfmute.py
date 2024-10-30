@@ -88,7 +88,7 @@ class Selfmute(commands.Cog):
     @discord.app_commands.command(name="selfmute",  description="Mute yourself for a specified amount of time.")
     @discord.app_commands.guild_only()
     async def selfmute(self, interaction: discord.Interaction, hours: Optional[int] = 0, minutes: Optional[int] = 0):
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
 
         if hours < 0 or minutes < 0:
             await interaction.followup.send("You can't mute yourself for a negative amount of time.", ephemeral=True)
