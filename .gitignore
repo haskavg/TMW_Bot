@@ -1,4 +1,5 @@
 **/__pycache__
+cogs/testing_*
 .old
 .env
 .vscode
