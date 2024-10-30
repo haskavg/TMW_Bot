@@ -266,8 +266,12 @@ class ImmersionLog(commands.Cog):
             received_for_one = int(round(MEDIA_TYPES[media_type]['points_multiplier'], 2))
             points_received_str = f"`+{points_received}` (X*{received_for_one})"
 
-        embed_title = f"Logged {amount} {MEDIA_TYPES[media_type]['unit_name']}{
-            's' if amount > 1 else ""} of {media_type} {random_guild_emoji}"
+        embed_title = (
+            f"Logged {amount} {MEDIA_TYPES[media_type]['unit_name']}"
+            f"{'s' if amount > 1 else ''} of {media_type} {random_guild_emoji}"
+        )
+
+
         log_embed = discord.Embed(title=embed_title, color=discord.Color.random())
         log_embed.description = f"[{actual_title}]({source_url})" if source_url else actual_title
         log_embed.add_field(name="Comment", value=comment or "No comment", inline=False)
@@ -364,7 +368,11 @@ class ImmersionLog(commands.Cog):
         log_id, media_type, media_name, amount_logged, log_date = deleted_log_info[0]
         log_date = datetime.strptime(log_date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
         await self.bot.RUN(DELETE_LOG_QUERY, (log_id, interaction.user.id))
-        await interaction.response.send_message(f"> {interaction.user.mention} Your log for `{amount_logged} {MEDIA_TYPES[media_type]['unit_name']}` of `{media_type}` (`{media_name if media_name else "No Name"}`) on `{log_date}` has been deleted.")
+        await interaction.response.send_message(
+            f"> {interaction.user.mention} Your log for `{amount_logged} {MEDIA_TYPES[media_type]['unit_name']}` "
+            f"of `{media_type}` (`{media_name or 'No Name'}`) on `{log_date}` has been deleted."
+        )
+
 
     async def get_total_points_for_achievement_group(self, user_id: int, achievement_group: str) -> float:
         result = await self.bot.GET(GET_TOTAL_POINTS_FOR_ACHIEVEMENT_GROUP_QUERY, (user_id, achievement_group))
