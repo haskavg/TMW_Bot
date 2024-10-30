@@ -6,7 +6,6 @@ import sys
 import traceback
 from discord.ext import commands
 
-
 _log = logging.getLogger(__name__)
 
 
@@ -86,7 +85,7 @@ class TMWBot(commands.Bot):
         error_embed = discord.Embed(title="Error", description=f"```{str(error)[:4000]}```", color=discord.Color.red())
 
         if interaction.channel.type == discord.ChannelType.private:
-            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: private\n"
+            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: private | User: {interaction.user.id} ({interaction.user.name})  \n"
                                      f"Data: ```json\n{interaction.data}```",
                                      embed=error_embed)
         else:
