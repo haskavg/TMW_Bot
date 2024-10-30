@@ -84,16 +84,15 @@ def process_logs(logs):
     fig, ax = plt.subplots(figsize=(16, 12))
     plt.title('Points Over Time', fontweight='bold', fontsize=20)
     plt.ylabel('Points', fontweight='bold', fontsize=14)
-    plt.xlabel('Date', fontweight='bold', fontsize=14)
+    plt.xlabel('Date' + x_lab, fontweight='bold', fontsize=14)
 
-    accumulator = 0
-    for media_type in df_plot.columns:
-        col = df_plot[media_type]
-        ax.bar(df_plot.index, col, bottom=accumulator, color=color_dict.get(media_type, 'gray'), label=media_type)
-        accumulator += col
+    # Plot the data as a stacked bar chart
+    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
 
-    ax.legend(df_plot.columns)
-    plt.xticks(df_plot.index, fontsize=10, rotation=45, horizontalalignment='right')
+    # Set custom x-axis labels based on the determined date format
+    ax.set_xticklabels(date_labels)
+    plt.xticks(rotation=45, ha='right')
+    plt.legend(loc='best')
     plt.grid()
 
     # Save the plot to a buffer
