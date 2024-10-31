@@ -58,6 +58,14 @@ class Resolver(commands.Cog):
 
         await interaction.channel.edit(reason=f'Marked as solved by {interaction.user}', name=new_thread_name, archived=True)
 
+    @commands.Cog.listener()
+    async def on_thread_create(self, thread: discord.Thread):
+        if thread.guild.id not in thread_resolver_settings:
+            return
+        if thread.parent.id not in thread_resolver_settings[thread.guild.id]:
+            return
+        await thread.send(f'{thread.owner.mention} Please use the `/solved` command once your problem has been solved.')
+
     async def ask_if_solved_for_guild(self, guild: discord.Guild):
         question_forums = await self.get_guild_help_forums(guild.id)
         if not question_forums:
