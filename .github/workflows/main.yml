@@ -50,4 +50,4 @@ jobs:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
         prerelease: false
         automatic_release_tag: "latest"
-        title: "Release ${{ github.sha }}"
+        title: "Release v1.0.${{ github.run_number }}"
