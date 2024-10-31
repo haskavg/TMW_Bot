@@ -47,7 +47,7 @@ class Resolver(commands.Cog):
         if interaction.channel.parent not in question_forums:
             return await interaction.response.send_message("This channel is not a help channel.", ephemeral=True)
         if not "[SOLVED]" in interaction.channel.name or interaction.channel.archived:
-            await interaction.response.send_message(f'{interaction.user} closed the thread.')
+            await interaction.response.send_message(f'{interaction.user.mention} closed the thread.')
         else:
             await interaction.response.send_message("This thread is already marked as solved.", ephemeral=True)
         new_thread_name = "[SOLVED] " + \
