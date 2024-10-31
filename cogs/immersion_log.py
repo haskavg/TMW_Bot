@@ -17,10 +17,6 @@ from datetime import timedelta, datetime
 from discord.ext import commands
 from discord.ext import tasks
 
-SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
-with open(SERVER_SETTINGS_PATH, "r") as f:
-    server_settings = yaml.safe_load(f)
-
 CREATE_LOGS_TABLE = """
     CREATE TABLE IF NOT EXISTS logs (
     log_id INTEGER PRIMARY KEY AUTOINCREMENT,

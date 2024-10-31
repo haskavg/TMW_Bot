@@ -13,9 +13,9 @@ from discord.utils import utcnow
 
 KOTOBA_BOT_ID = 251239170058616833
 
-SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
-with open(SERVER_SETTINGS_PATH, "r") as f:
-    server_settings = yaml.safe_load(f)
+GATEKEEPER_SETTINGS_PATH = os.getenv("ALT_GATEKEEPER_SETTINGS_PATH") or "config/gatekeeper_settings.yml"
+with open(GATEKEEPER_SETTINGS_PATH, "r") as f:
+    gatekeeper_settings = yaml.safe_load(f)
 
 CREATE_QUIZ_ATTEMPTS_TABLE = """
     CREATE TABLE IF NOT EXISTS quiz_attempts (
@@ -48,7 +48,7 @@ GET_PASSED_QUIZZES = """SELECT quiz_name FROM passed_quizzes WHERE guild_id = ? 
 
 
 async def quiz_autocomplete(interaction: discord.Interaction, current_input: str):
-    rank_names = [quiz['name'] for quiz in server_settings['rank_structure']
+    rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure']
                   [interaction.guild.id] if quiz["combination_rank"] is False and quiz["no_timeout"] is False]
     possible_choices = [discord.app_commands.Choice(name=rank_name, value=rank_name) for rank_name in rank_names]
     return possible_choices[0:25]
@@ -180,12 +180,12 @@ class LevelUp(commands.Cog):
         await self.bot.RUN(CREATE_PASSED_QUIZZES_TABLE)
 
     async def is_in_levelup_channel(self, message: discord.Message):
-        channel_ids = server_settings['rank_settings'][message.guild.id]['valid_levelup_channels']
+        channel_ids = gatekeeper_settings['rank_settings'][message.guild.id]['valid_levelup_channels']
         channels = [message.guild.get_channel(channel_id) for channel_id in channel_ids]
         return message.channel in channels
 
     async def is_restricted_quiz(self, message: discord.Message):
-        restricted_quizzes = server_settings['rank_settings'][message.guild.id]['restricted_quiz_names']
+        restricted_quizzes = gatekeeper_settings['rank_settings'][message.guild.id]['restricted_quiz_names']
         for quiz_name in restricted_quizzes:
             if quiz_name.lower() in message.content.lower():
                 return quiz_name, True
@@ -198,7 +198,7 @@ class LevelUp(commands.Cog):
         return False, None
 
     async def rank_has_cooldown(self, guild_id: int, rank_name: str):
-        rank_structure = server_settings['rank_structure'][guild_id]
+        rank_structure = gatekeeper_settings['rank_structure'][guild_id]
         for rank in rank_structure:
             if rank['name'] == rank_name:
                 return not rank['no_timeout']
@@ -209,7 +209,7 @@ class LevelUp(commands.Cog):
 
         restricted_quiz_name, is_restricted = await self.is_restricted_quiz(message)
         is_in_levelup_channel = await self.is_in_levelup_channel(message)
-        is_valid_quiz, performed_quiz_name = await self.is_valid_quiz(message, server_settings['rank_structure'][message.guild.id])
+        is_valid_quiz, performed_quiz_name = await self.is_valid_quiz(message, gatekeeper_settings['rank_structure'][message.guild.id])
 
         is_on_cooldown = await self.is_on_cooldown(message, performed_quiz_name)
         if is_on_cooldown:
@@ -257,7 +257,7 @@ class LevelUp(commands.Cog):
         await message.channel.send(f"{message.author.mention} registering attempt for {quiz_name}. You can try again in 7 days.")
 
     async def get_corresponding_quiz_data(self, message: discord.Message, quiz_result: dict):
-        rank_structure = server_settings['rank_structure'][message.guild.id]
+        rank_structure = gatekeeper_settings['rank_structure'][message.guild.id]
         deck_names = [deck['shortName'] for deck in quiz_result["decks"]]
         index_specified = bool(quiz_result["decks"][0].get("startIndex"))
         for rank in rank_structure:
@@ -268,7 +268,7 @@ class LevelUp(commands.Cog):
         return None
 
     async def get_all_quiz_roles(self, guild: discord.Guild):
-        rank_structure = server_settings['rank_structure'][guild.id]
+        rank_structure = gatekeeper_settings['rank_structure'][guild.id]
         return [guild.get_role(role['rank_to_get']) for role in rank_structure if role['rank_to_get']]
 
     async def reward_user(self, member: discord.Member, quiz_data: dict):
@@ -283,7 +283,7 @@ class LevelUp(commands.Cog):
             await self.check_if_combination_rank_earned(member)
 
     async def check_if_combination_rank_earned(self, member: discord.Member):
-        rank_structure = server_settings['rank_structure'][member.guild.id]
+        rank_structure = gatekeeper_settings['rank_structure'][member.guild.id]
         combination_ranks = [rank_data for rank_data in rank_structure if rank_data['combination_rank'] is True]
         earned_ranks = await self.bot.GET(GET_PASSED_QUIZZES, (member.guild.id, member.id))
         earned_ranks = [rank[0] for rank in earned_ranks]
@@ -299,7 +299,7 @@ class LevelUp(commands.Cog):
 
     async def send_in_announcement_channel(self, member: discord.Member, message: str):
         announcement_channel = member.guild.get_channel(
-            server_settings['rank_settings'][member.guild.id]['announce_channel'])
+            gatekeeper_settings['rank_settings'][member.guild.id]['announce_channel'])
         await announcement_channel.send(message)
 
     async def already_owns_higher_or_same_role(self, rank_to_get_id: int, member: discord.Member):
@@ -361,7 +361,7 @@ class LevelUp(commands.Cog):
             await self.bot.RUN(RESET_ALL_QUIZ_ATTEMPTS, (interaction.guild.id, user.id))
             await interaction.response.send_message(f"Cleared all quiz cooldown for {user.mention}.")
         else:
-            if not any(quiz_to_reset in rank['name'] for rank in server_settings['rank_structure'][interaction.guild.id]):
+            if not any(quiz_to_reset in rank['name'] for rank in gatekeeper_settings['rank_structure'][interaction.guild.id]):
                 await interaction.response.send_message("Invalid quiz name.", ephemeral=True)
                 return
             await self.bot.RUN(RESET_SPECIFIC_QUIZ_ATTEMPTS, (interaction.guild.id, user.id, quiz_to_reset))
@@ -421,7 +421,7 @@ class LevelUp(commands.Cog):
         else:
             guild_id = interaction.guild.id
 
-        rank_structure = server_settings['rank_structure'][guild_id]
+        rank_structure = gatekeeper_settings['rank_structure'][guild_id]
 
         rank_command_embed = discord.Embed(title="Rank Commands", color=discord.Color.blurple())
 

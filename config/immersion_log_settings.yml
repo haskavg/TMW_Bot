@@ -6,3 +6,8 @@ points_multipliers:
   Reading_Time: 0.67 # Minutes
   Listening_Time: 0.67 # Minutes
   Reading: 0.0028571428571429 # Characters
+
+immersion_bot:
+  allowed_log_channels:
+    - 814947177608118273
+    - 1297383003479081017

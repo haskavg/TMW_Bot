@@ -8,9 +8,9 @@ from discord.ext import commands, tasks
 
 from lib.bot import TMWBot
 
-SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
-with open(SERVER_SETTINGS_PATH, "r") as f:
-    server_settings = yaml.safe_load(f)
+RANKSAVER_SETTINGS_PATH = os.getenv("ALT_RANKSAVER_SETTINGS_PATH") or "config/rank_saver_settings.yml"
+with open(RANKSAVER_SETTINGS_PATH, "r") as f:
+    ranksaver_settings = yaml.safe_load(f)
 
 CREATE_USER_RANKS_TABLE = """
 CREATE TABLE IF NOT EXISTS user_ranks (
@@ -44,10 +44,10 @@ class RankSaver(commands.Cog):
         async with aiosqlite.connect(self.bot.path_to_db) as db:
             for guild in self.bot.guilds:
                 all_members = [member for member in guild.members if not member.bot]
-                all_self_mute_role_ids = server_settings['selfmute_config'].get(guild.id, {}).get("mute_roles", [])
+                all_role_ids_to_ignore = ranksaver_settings['role_ids_to_ignore']
                 for member in all_members:
                     member_role_ids = [
-                        str(role.id) for role in member.roles if role.is_assignable() and role.id not in all_self_mute_role_ids
+                        str(role.id) for role in member.roles if role.is_assignable() and role.id not in all_role_ids_to_ignore
                     ]
                     role_ids_str = ','.join(member_role_ids)
                     await db.execute(SAVE_USER_ROLE_QUERY, (guild.id, member.id, role_ids_str))
@@ -68,7 +68,7 @@ class RankSaver(commands.Cog):
                 assignable_roles = [role for role in roles_to_restore if role.is_assignable()]
                 await member.add_roles(*assignable_roles)
 
-                to_restore_channel = member.guild.get_channel(server_settings["rank_settings"][member.guild.id]["announce_channel"])
+                to_restore_channel = member.guild.get_channel(ranksaver_settings["announce_channel"][member.guild.id])
                 if not to_restore_channel:
                     to_restore_channel = member.guild.system_channel
                 if not to_restore_channel:
