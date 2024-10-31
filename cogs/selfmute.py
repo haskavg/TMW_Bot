@@ -9,9 +9,9 @@ from discord.ext import tasks
 
 from datetime import datetime, timedelta
 
-SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
-with open(SETTINGS_PATH, 'r') as settings_file:
-    server_settings = yaml.safe_load(settings_file)
+SELFMUTE_SETTINGS_PATH = os.getenv("ALT_SELFMUTE_SETTINGS_PATH") or "config/selfmute_settings.yml"
+with open(SELFMUTE_SETTINGS_PATH, 'r') as settings_file:
+    selfmute_settings = yaml.safe_load(settings_file)
 
 CREATE_ACTIVE_MUTES_TABLE = """
 CREATE TABLE IF NOT EXISTS active_mutes (
@@ -68,7 +68,7 @@ class Selfmute(commands.Cog):
             await interaction.followup.send(f"{member.mention} has been unmuted and roles restored when possible.", ephemeral=True)
 
     async def perform_user_unmute(self, member: discord.Member, channel: discord.TextChannel, mute_data):
-        all_self_mute_role_ids = server_settings['selfmute_config'].get(member.guild.id, {}).get("mute_roles", [])
+        all_self_mute_role_ids = selfmute_settings['selfmute_config'].get(member.guild.id, {}).get("mute_roles", [])
         all_selftmute_roles = [member.guild.get_role(role_id) for role_id in all_self_mute_role_ids]
         await member.edit(roles=[role for role in member.roles if role not in all_selftmute_roles])
         if not mute_data:
@@ -97,7 +97,7 @@ class Selfmute(commands.Cog):
             await interaction.followup.send("You can only mute yourself for a maximum of 7 days.", ephemeral=True)
             return
 
-        all_self_mute_role_ids = server_settings['selfmute_config'].get(interaction.guild.id, {}).get("mute_roles", [])
+        all_self_mute_role_ids = selfmute_settings['selfmute_config'].get(interaction.guild.id, {}).get("mute_roles", [])
         all_selftmute_roles = [interaction.guild.get_role(role_id) for role_id in all_self_mute_role_ids]
 
         if not all_selftmute_roles:
@@ -146,7 +146,7 @@ class Selfmute(commands.Cog):
         if unmute_time > discord.utils.utcnow().replace(tzinfo=None):
             await interaction.response.send_message(f"You are muted until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>.", ephemeral=True)
         else:
-            announce_channel_id = server_settings['selfmute_config'].get(
+            announce_channel_id = selfmute_settings['selfmute_config'].get(
                 interaction.guild.id, {}).get("announce_channel")
             announce_channel = interaction.guild.get_channel(announce_channel_id)
             await self.perform_user_unmute(interaction.user, announce_channel, mute_data)
@@ -156,7 +156,7 @@ class Selfmute(commands.Cog):
     async def clear_mutes(self):
         for guild in self.bot.guilds:
             active_mutes = await self.bot.GET(GET_ALL_MUTES_QUERY, (guild.id,))
-            announce_channel_id = server_settings['selfmute_config'].get(guild.id, {}).get("announce_channel")
+            announce_channel_id = selfmute_settings['selfmute_config'].get(guild.id, {}).get("announce_channel")
             announce_channel = guild.get_channel(announce_channel_id)
             for mute_data in active_mutes:
                 guild_id, user_id, mute_role_id, role_ids_to_restore, unmute_time = mute_data
