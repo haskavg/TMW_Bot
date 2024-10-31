@@ -108,7 +108,7 @@ class AutoReceive(commands.Cog):
         await self.bot.RUN(DELETE_AUTO_RECEIVE_ROLE_SQL, (interaction.guild.id, role_to_have.id, role_to_get.id))
         await interaction.response.send_message(f"Removed {role_to_have.mention} as a role that should automatically receive {role_to_get.mention}.", ephemeral=True)
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=15)
     async def give_auto_roles(self):
         print("AUTO-RECEIVE: Checking for roles to give...")
         for guild in self.bot.guilds:
