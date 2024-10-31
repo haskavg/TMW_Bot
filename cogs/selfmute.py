@@ -136,21 +136,22 @@ class Selfmute(commands.Cog):
 
     @discord.app_commands.command(name="check_mute", description="Removes your mute if the specified time has already pasted")
     async def check_mute(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
         mute_data = await self.bot.GET_ONE(GET_USER_MUTE_QUERY, (interaction.guild.id, interaction.user.id))
         if not mute_data:
             await self.perform_user_unmute(interaction.user, interaction.channel, mute_data)
-            await interaction.response.send_message("You are not muted.", ephemeral=True)
+            await interaction.followup.send("You are not muted.", ephemeral=True)
             return
         guild_id, user_id, mute_role_id, role_ids_to_restore, unmute_time = mute_data
         unmute_time = datetime.strptime(unmute_time, "%Y-%m-%d %H:%M:%S")
         if unmute_time > discord.utils.utcnow().replace(tzinfo=None):
-            await interaction.response.send_message(f"You are muted until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>.", ephemeral=True)
+            await interaction.followup.send(f"You are muted until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>.", ephemeral=True)
         else:
             announce_channel_id = selfmute_settings['selfmute_config'].get(
                 interaction.guild.id, {}).get("announce_channel")
             announce_channel = interaction.guild.get_channel(announce_channel_id)
             await self.perform_user_unmute(interaction.user, announce_channel, mute_data)
-            await interaction.response.send_message("You are not muted anymore.", ephemeral=True)
+            await interaction.followup.send("You are not muted anymore.", ephemeral=True)
 
     @tasks.loop(minutes=1)
     async def clear_mutes(self):
