@@ -40,3 +40,11 @@ jobs:
     - name: Clean up unused Docker images
       run: |
         docker image prune -f
+
+    - name: Release on GitHub
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: false
+        automatic_release_tag: "latest"
+        title: "Release ${{ github.sha }}"
