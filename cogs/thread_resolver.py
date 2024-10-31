@@ -6,9 +6,9 @@ from datetime import timedelta
 from discord.ext import commands
 from discord.ext import tasks
 
-SERVER_SETTINGS_PATH = os.getenv("ALT_SETTINGS_PATH") or "config/settings.yml"
-with open(SERVER_SETTINGS_PATH, "r") as f:
-    server_settings = yaml.safe_load(f)
+THREAD_RESOLVER_SETTINGS_PATH = os.getenv("ALT_THREAD_RESOLVER_SETTINGS") or "config/thread_resolver_settings.yml"
+with open(THREAD_RESOLVER_SETTINGS_PATH, "r") as f:
+    thread_resolver_settings = yaml.safe_load(f)
 
 
 async def _get_channel(bot: TMWBot, channel_id: int) -> discord.TextChannel:
@@ -35,11 +35,11 @@ class Resolver(commands.Cog):
 
     async def get_guild_help_forums(self, guild_id: int):
         guild = self.bot.get_guild(guild_id)
-        return [channel for channel in guild.forums if channel.id in server_settings["help_channels"][guild_id]]
+        return [channel for channel in guild.forums if channel.id in thread_resolver_settings[guild_id]]
 
     @discord.app_commands.command(name="solved", description="Marks a thread as solved.")
     async def solved(self, interaction: discord.Interaction):
-        if interaction.guild_id not in server_settings["help_channels"]:
+        if interaction.guild_id not in thread_resolver_settings:
             return await interaction.response.send_message("This server does not have any help channels set up.", ephemeral=True)
         if not isinstance(interaction.channel, discord.Thread):
             return await interaction.response.send_message("This command can only be used in a help thread.", ephemeral=True)
@@ -73,7 +73,7 @@ class Resolver(commands.Cog):
     @tasks.loop(hours=1)
     async def ask_if_solved(self):
         for guild in self.bot.guilds:
-            if guild.id not in server_settings["help_channels"]:
+            if guild.id not in thread_resolver_settings:
                 continue
             else:
                 await self.ask_if_solved_for_guild(guild)

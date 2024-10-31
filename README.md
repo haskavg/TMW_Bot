@@ -13,8 +13,6 @@
 
     `TOKEN=YOUR_DISCORD_BOT_TOKEN`
 
-    `ALT_SETTINGS_PATH="data/alt_settings.yml"` Optional; In case you want to use a settings file not tracked by git.
-
     `AUTHORIZED_USERS=960526101833191435,501009840437592074` Comma separated list of user IDs who can use bot management commands.
 
     `DEBUG_USER=960526101833191435` User ID of the user who gets sent debug messages.
@@ -26,6 +24,12 @@
     `TMDB_API_KEY=YOUR_TMDB_API_KEY`
 
 4. Run the bot with `python main.py`
+
+### Overwrite Settings
+
+You can link to alternative setting files by setting the path in the corresponding environment variable. 
+
+Each part of the bot can be configured separately. Please look into the cog files for the variable names.
 
 
 ### General ToDo
