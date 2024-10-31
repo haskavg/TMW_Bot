@@ -47,7 +47,7 @@ class Resolver(commands.Cog):
         if interaction.channel.parent not in question_forums:
             return await interaction.response.send_message("This channel is not a help channel.", ephemeral=True)
         if not "[SOLVED]" in interaction.channel.name or interaction.channel.archived:
-            await interaction.response.send_message(f'{interaction.user} closed the thread.')
+            await interaction.response.send_message(f'{interaction.user.mention} closed the thread.')
         else:
             await interaction.response.send_message("This thread is already marked as solved.", ephemeral=True)
         new_thread_name = "[SOLVED] " + \
@@ -56,7 +56,7 @@ class Resolver(commands.Cog):
         if len(new_thread_name) > 100:
             new_thread_name = new_thread_name[:97] + "..."
 
-        await interaction.channel.edit(reason=f'Marked as solved by **{interaction.user}**', name=new_thread_name, archived=True)
+        await interaction.channel.edit(reason=f'Marked as solved by {interaction.user}', name=new_thread_name, archived=True)
 
     async def ask_if_solved_for_guild(self, guild: discord.Guild):
         question_forums = await self.get_guild_help_forums(guild.id)
