@@ -5,3 +5,4 @@ aiohttp
 pyyaml
 matplotlib
 pandas
+humanize

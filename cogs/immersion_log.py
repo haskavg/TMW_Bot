@@ -9,9 +9,10 @@ from .username_fetcher import get_username_db
 
 import discord
 import os
-import yaml
 import random
 import csv
+import humanize
+
 from typing import Optional
 from datetime import timedelta, datetime
 from discord.ext import commands
@@ -489,6 +490,16 @@ class ImmersionLog(commands.Cog):
         leaderboard_data = await self.bot.GET(GET_MONTHLY_LEADERBOARD_QUERY, (month, month, media_type, media_type))
         user_data = await self.bot.GET(GET_USER_MONTHLY_POINTS_QUERY, (interaction.user.id, month, month, media_type, media_type))
 
+        def human_readable_number(value):
+            value = int(value)
+            if value < 1000:
+                return str(value)
+            for unit in ['k', 'm', 'b', 't']:
+                value /= 1000.0
+                if value < 1000:
+                    return f"{value:.1f}{unit}"
+            return f"{value:.1f}P"
+
         embed = discord.Embed(
             title=f"Immersion Leaderboard - {(datetime.strptime(month, '%Y-%m').strftime('%B %Y') if month != 'ALL' else 'All Time')}",
             color=discord.Color.blue()
@@ -497,29 +508,41 @@ class ImmersionLog(commands.Cog):
             embed.title += f" for {media_type}"
         unit_name = MEDIA_TYPES[media_type]['unit_name'] if media_type else None
         user_in_top_20 = False
+
+        description = ""
+
         if leaderboard_data:
             for rank, (user_id, total_points, total_logged) in enumerate(leaderboard_data, start=1):
                 user_name = await get_username_db(self.bot, user_id)
+                total_points_humanized = human_readable_number(total_points)
+                total_logged_humanized = human_readable_number(total_logged)
+
                 if interaction.user.id == user_id:
-                    embed.add_field(name=f"**{rank}. {user_name} (YOU)**", value=f"**{round(total_points, 2)} points**" +
-                                    (f"\n**{total_logged} {unit_name}s**" if unit_name else ""), inline=True)
+                    description += f"**{humanize.ordinal(rank)} (YOU) {user_name}**: **{total_points_humanized} pts**\t"
+                    if unit_name:
+                        description += f" | **{total_logged_humanized} {unit_name}s**"
+                    description += "\n"
                     user_in_top_20 = True
                 else:
-                    embed.add_field(name=f"{rank}. {user_name}", value=f"{round(total_points, 2)} points" +
-                                    (f"\n{total_logged} {unit_name}s" if unit_name else ""), inline=True)
+                    description += f"**{humanize.ordinal(rank)} {user_name}**: {total_points_humanized} pts \t"
+                    if unit_name:
+                        description += f" | {total_logged_humanized} {unit_name}s"
+                    description += "\n"
         else:
-            embed.description = "No logs available for this month. Start immersing to be on the leaderboard!"
+            description = "No logs available for this month. Start immersing to be on the leaderboard!"
 
         if not user_in_top_20 and user_data and user_data[0] and user_data[0][0]:
-            user_points = round(user_data[0][0], 2)
-            user_logged = round(user_data[0][1], 2)
+            user_points = human_readable_number(user_data[0][0])
+            user_logged = human_readable_number(user_data[0][1])
             user_name = await get_username_db(self.bot, interaction.user.id)
-            embed.add_field(name=f"**You**", value=f"**{user_points} points**" +
-                            (f"\n{user_logged} {unit_name}s" if unit_name else ""), inline=True)
-        elif user_in_top_20:
-            embed.add_field(name=f"**---**", value=f" ", inline=True)
-        else:
-            embed.add_field(name=f"**You**", value="**0 points**", inline=True)
+            description += f"\n**You**: **{user_points} pts**"
+            if unit_name:
+                description += f" | **{user_logged} {unit_name}s**"
+        elif not user_in_top_20:
+            description += f"\n**You**: **0 pts**"
+
+        embed.description = description
+
         await interaction.followup.send(embed=embed)
 
 
