@@ -3,9 +3,13 @@ selfmute_config:
     mute_roles:
       - 1294660039747047425
       - 1294661079032528948
+    roles_not_to_remove:
+      - 1301694741083328565 # Sharing
     announce_channel: 617136489482027059
   1297383002610995272: # Test_Guild
     mute_roles:
       - 1297383002849935453
       - 1297383002849935454
+    roles_not_to_remove:
+      - 1297383002849935456 # Admin
     announce_channel: 1297383003479081019

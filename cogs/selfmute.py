@@ -45,12 +45,13 @@ class Selfmute(commands.Cog):
         self.clear_mutes.start()
 
     async def perform_mute(self, member: discord.Member, mute_role: discord.Role, unmute_time: datetime):
-        roles_to_save = [role for role in member.roles if not role.is_default(
-        ) and not role.is_premium_subscriber() and role.is_assignable()]
+        roles_not_to_remove = [member.guild.get_role(role_id) for role_id in selfmute_settings['selfmute_config'].get(member.guild.id, {}).get("roles_not_to_remove", [])]
+        roles_to_save = [role for role in member.roles if not role.is_default() and not role.is_premium_subscriber() and role.is_assignable() and role not in roles_not_to_remove]
         current_roles_string = ",".join([str(role.id) for role in roles_to_save])
         unmute_time_string = unmute_time.strftime("%Y-%m-%d %H:%M:%S")
         await self.bot.RUN(STORE_MUTE_QUERY, (member.guild.id, member.id, mute_role.id, current_roles_string, unmute_time_string))
-        await member.edit(roles=[mute_role])
+        new_roles = [role for role in member.roles if role not in roles_to_save] + [mute_role]
+        await member.edit(roles=new_roles)
 
     @discord.app_commands.command(name="unmute_user",  description="Removes a mute from a user.")
     @discord.app_commands.guild_only()
