@@ -1,6 +1,6 @@
 points_multipliers:
   Visual_Novel: 0.0028571428571429 # Characters
-  Manga: 0.125 # Pages
+  Manga: 0.25 # Pages
   Anime: 13.0 # Episodes
   Book: 1.0 # Pages
   Reading_Time: 0.67 # Minutes
