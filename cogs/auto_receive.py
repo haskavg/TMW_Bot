@@ -8,6 +8,8 @@ from discord.ext import tasks
 
 from lib.bot import TMWBot
 
+AUTO_RECEIVE_LOCK = asyncio.Lock()
+
 CREATE_AUTO_RECEIVE_TABLE_SQL = """
         CREATE TABLE IF NOT EXISTS auto_receive_roles (
         guild_id INTEGER NOT NULL,
@@ -111,29 +113,30 @@ class AutoReceive(commands.Cog):
     @tasks.loop(minutes=15)
     async def give_auto_roles(self):
         print("AUTO-RECEIVE: Checking for roles to give...")
-        for guild in self.bot.guilds:
-            auto_receive_settings = await self.get_auto_receive_roles(guild.id)
-            banned_user_data = await self.get_forbidden_users(guild.id)
-            for role_data in auto_receive_settings:
-                role_to_have = discord.utils.get(guild.roles, id=role_data["role_id_to_have"])
-                role_to_get = discord.utils.get(guild.roles, id=role_data["role_id_to_get"])
-                if not role_to_have or not role_to_get:
-                    self.bot.RUN(DELETE_AUTO_RECEIVE_ROLE_SQL,
-                                 (guild.id, role_data["role_id_to_have"], role_data["role_id_to_get"]))
+        async with AUTO_RECEIVE_LOCK:
+            for guild in self.bot.guilds:
+                auto_receive_settings = await self.get_auto_receive_roles(guild.id)
+                banned_user_data = await self.get_forbidden_users(guild.id)
+                for role_data in auto_receive_settings:
+                    role_to_have = discord.utils.get(guild.roles, id=role_data["role_id_to_have"])
+                    role_to_get = discord.utils.get(guild.roles, id=role_data["role_id_to_get"])
+                    if not role_to_have or not role_to_get:
+                        self.bot.RUN(DELETE_AUTO_RECEIVE_ROLE_SQL,
+                                     (guild.id, role_data["role_id_to_have"], role_data["role_id_to_get"]))
 
-                banned_ids = [data["user_id"] for data in banned_user_data if data["role_id"] == role_to_get.id]
+                    banned_ids = [data["user_id"] for data in banned_user_data if data["role_id"] == role_to_get.id]
 
-                for member in role_to_have.members:
-                    if member.id in banned_ids:
-                        print(f"AUTO-RECEIVE: Did not give {member} the role {role_to_get} due to being banned.")
-                        continue
+                    for member in role_to_have.members:
+                        if member.id in banned_ids:
+                            print(f"AUTO-RECEIVE: Did not give {member} the role {role_to_get} due to being banned.")
+                            continue
 
-                    if role_to_get not in member.roles:
-                        print(f"AUTO-RECEIVE: Gave {member} the role {role_to_get}")
-                        await asyncio.sleep(1)
-                        await member.add_roles(role_to_get)
+                        if role_to_get not in member.roles:
+                            print(f"AUTO-RECEIVE: Gave {member} the role {role_to_get}")
+                            await asyncio.sleep(1)
+                            await member.add_roles(role_to_get)
 
-        print("AUTO-RECEIVE: Done checking for roles to give.")
+            print("AUTO-RECEIVE: Done checking for roles to give.")
 
 
 async def setup(bot):
