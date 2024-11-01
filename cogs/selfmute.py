@@ -78,6 +78,7 @@ class Selfmute(commands.Cog):
         if role_ids_to_restore:
             roles_to_restore = [member.guild.get_role(int(role_id)) for role_id in role_ids_to_restore.split(",")]
             roles_to_restore = [role for role in roles_to_restore if role]
+            roles_to_restore.sort(key=lambda role: role.position, reverse=True)
             roles_to_restore = [role for role in roles_to_restore if not role.is_default(
             ) and not role.is_premium_subscriber() and role.is_assignable()]
             await member.add_roles(*roles_to_restore)
@@ -117,14 +118,16 @@ class Selfmute(commands.Cog):
         async def mute_callback(interaction: discord.Interaction):
             await interaction.response.defer()
             mute_role = interaction.guild.get_role(int(interaction.data["values"][0]))
-            await self.perform_mute(interaction.user, mute_role, unmute_time)
-            await interaction.followup.send("You are now muted.", ephemeral=True)
+            user_roles = [role for role in interaction.user.roles if not role.is_default()]
+            user_roles.sort(key=lambda role: role.position, reverse=True)
             await interaction.channel.send(
                 f"**🔇 {interaction.user.mention} has been muted with {mute_role.mention} " +
                 f"until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>. 🔇\n" +
                 f"They had the following roles: " +
-                f"{', '.join([role.mention for role in interaction.user.roles if not role.is_default()])}**",
+                f"{', '.join([role.mention for role in user_roles])}**",
                 allowed_mentions=discord.AllowedMentions.none())
+            await self.perform_mute(interaction.user, mute_role, unmute_time)
+            await interaction.followup.send("You are now muted.", ephemeral=True)
 
         my_view = discord.ui.View()
         my_select = discord.ui.Select()
