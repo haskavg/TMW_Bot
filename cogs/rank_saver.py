@@ -63,6 +63,8 @@ class RankSaver(commands.Cog):
             roles_to_restore = [
                 discord.utils.get(member.guild.roles, id=int(role_id)) for role_id in role_ids if discord.utils.get(member.guild.roles, id=int(role_id))
             ]
+            all_role_ids_to_ignore = ranksaver_settings['role_ids_to_ignore']
+            roles_to_restore = [role for role in roles_to_restore if role.id not in all_role_ids_to_ignore]
             if roles_to_restore:
                 print(f"RANK SAVER: Restoring roles for {member.name}.")
                 assignable_roles = [role for role in roles_to_restore if role.is_assignable()]
