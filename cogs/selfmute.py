@@ -120,14 +120,21 @@ class Selfmute(commands.Cog):
             mute_role = interaction.guild.get_role(int(interaction.data["values"][0]))
             user_roles = [role for role in interaction.user.roles if not role.is_default()]
             user_roles.sort(key=lambda role: role.position, reverse=True)
-            await interaction.channel.send(
-                f"**🔇 {interaction.user.mention} has been muted with {mute_role.mention} " +
+            announce_channel_id = selfmute_settings['selfmute_config'].get(interaction.guild.id, {}).get("announce_channel")
+            announce_channel = interaction.guild.get_channel(announce_channel_id)
+
+            mute_message = (
+                f"**🔇You ({interaction.user.mention}) have been muted with {mute_role.mention} " +
                 f"until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>. 🔇\n" +
-                f"They had the following roles: " +
-                f"{', '.join([role.mention for role in user_roles])}**",
-                allowed_mentions=discord.AllowedMentions.none())
+                f"You had the following roles: " +
+                f"{', '.join([role.mention for role in user_roles])}**"
+            )
+
+            if announce_channel:
+                await announce_channel.send(mute_message, allowed_mentions=discord.AllowedMentions.none())
+
             await self.perform_mute(interaction.user, mute_role, unmute_time)
-            await interaction.followup.send("You are now muted.", ephemeral=True)
+            await interaction.followup.send(mute_message, ephemeral=True)
 
         my_view = discord.ui.View()
         my_select = discord.ui.Select()
