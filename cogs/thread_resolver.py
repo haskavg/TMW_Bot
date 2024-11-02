@@ -2,6 +2,7 @@ from lib.bot import TMWBot
 import discord
 import os
 import yaml
+import asyncio
 from datetime import timedelta
 from discord.ext import commands
 from discord.ext import tasks
@@ -64,6 +65,8 @@ class Resolver(commands.Cog):
             return
         if thread.parent.id not in thread_resolver_settings[thread.guild.id]:
             return
+        while not thread.last_message_id:
+            await asyncio.sleep(3)
         await thread.send(f'{thread.owner.mention} Please use the `/solved` command once your problem has been solved.')
 
     async def ask_if_solved_for_guild(self, guild: discord.Guild):
