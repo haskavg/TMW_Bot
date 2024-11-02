@@ -319,6 +319,17 @@ class LevelUp(commands.Cog):
         passed_quizzes = [quiz[0] for quiz in passed_quizzes]
         return quiz_name in passed_quizzes
 
+    async def get_next_attempt_time(self, guild_id: int, user_id: int, quiz_name: str) -> Optional[int]:
+        """Returns the Unix timestamp of when the user can next attempt the quiz."""
+        last_attempt = await self.bot.GET_ONE(GET_LAST_QUIZ_ATTEMPT, (guild_id, user_id, quiz_name))
+        if not last_attempt:
+            return None
+
+        quiz_name, last_attempt_time = last_attempt
+        last_attempt_time = datetime.fromisoformat(last_attempt_time)
+        next_attempt_time = last_attempt_time + timedelta(days=7)
+        return int(next_attempt_time.timestamp())
+
     @commands.Cog.listener(name="on_message")
     async def level_up_routine(self, message: discord.Message):
         if not message.author.id == KOTOBA_BOT_ID and not 'k!q' in message.content.lower():
@@ -347,9 +358,19 @@ class LevelUp(commands.Cog):
         if success:
             await self.reward_user(member, quiz_data)
             await self.send_in_announcement_channel(member, quiz_message)
+            try:
+                await member.send(f"Congratulations! You passed the {quiz_data['name']} quiz!")
+            except discord.Forbidden:
+                pass
         else:
-            await message.channel.send(quiz_message)
-            return
+            next_attempt = await self.get_next_attempt_time(message.guild.id, member.id, quiz_data['name'])
+            if next_attempt:
+                try:
+                    await member.send(
+                        f"Your attempt at the {quiz_data['name']} quiz was unsuccessful: {quiz_message}\n"
+                        f"You can try again <t:{next_attempt}:R> (on <t:{next_attempt}:F>).")
+                except discord.Forbidden:
+                    pass
 
     @discord.app_commands.command(name="reset_user_cooldown",  description="Reset a users quiz cooldown.")
     @discord.app_commands.guild_only()

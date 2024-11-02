@@ -290,9 +290,9 @@ rank_structure:
         - "n3"
         - "n1"
       deck_range: null
-      score_limit: 1
+      score_limit: 2
       max_missed: 10
-      command: "k!quiz n3+n1 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz n3+n1 2 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
     - name: "GN2"
