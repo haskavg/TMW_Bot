@@ -226,12 +226,26 @@ class ImmersionLog(commands.Cog):
         thumbnail_url = await self.get_thumbnail_url(media_type, name)
         source_url = await self.get_source_url(media_type, name)
 
+        # This is to diplay how the points received were calculated without directly using the multiplier....
+        # could be improved on as this is pretty crazy... could set it for each group at this point.
+        # TODO: Probably change this.
         if MEDIA_TYPES[media_type]['points_multiplier'] < 1:
-            needed_for_one = int(round(1 / MEDIA_TYPES[media_type]['points_multiplier'], 2))
-            points_received_str = f"`+{points_received}` (X/{needed_for_one})"
+            needed_for_one = round(1 / MEDIA_TYPES[media_type]['points_multiplier'], 2)
+            if needed_for_one.is_integer():
+                points_received_str = f"`+{points_received}` (X/{int(needed_for_one)})"
+            elif needed_for_one < 5:
+                points_received_str = f"`+{points_received}` (X/{needed_for_one:.2f})"
+            else:
+                points_received_str = f"`+{points_received}` (X/{int(needed_for_one)})"
         else:
-            received_for_one = int(round(MEDIA_TYPES[media_type]['points_multiplier'], 2))
-            points_received_str = f"`+{points_received}` (X*{received_for_one})"
+            received_for_one = round(MEDIA_TYPES[media_type]['points_multiplier'], 2)
+            if received_for_one.is_integer():
+                points_received_str = f"`+{points_received}` (X*{int(received_for_one)})"
+            elif received_for_one < 5:
+                points_received_str = f"`+{points_received}` (X*{received_for_one:.2f})"
+            else:
+                points_received_str = f"`+{points_received}` (X*{int(received_for_one)})"
+        ##########################
 
         embed_title = (
             f"Logged {amount} {MEDIA_TYPES[media_type]['unit_name']}"
