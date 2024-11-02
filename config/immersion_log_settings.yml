@@ -11,3 +11,137 @@ immersion_bot:
   allowed_log_channels:
     - 814947177608118273
     - 1297383003479081017
+
+achievements:
+  Visual Novel:
+    - points: 1
+      title: "🌸 Prologue Ponderer"
+      description: "You've started your first visual novel, exploring Japanese stories one character at a time! 🌸"
+    - points: 1000
+      title: "📝 Choice Maker"
+      description: "You're making meaningful decisions in the story, picking up key phrases along the way. 📝"
+    - points: 5000
+      title: "💖 Route Romantic"
+      description: "Deep into different routes, you're grasping dialogue and character subtleties with ease! 💖"
+    - points: 15000
+      title: "💫 Plot Weaver"
+      description: "You're a pro, following intricate visual novel storylines and understanding advanced vocabulary! 💫"
+    - points: 30000
+      title: "👑 Ultimate Protagonist"
+      description: "Fluent in visual novels, you navigate any storyline, from romance to mystery, with full comprehension! 👑"
+    - points: 50000
+      title: "✨ Narrative Navigator"
+      description: "You have a deep understanding of narrative structures and character development across different visual novels. ✨"
+    - points: 60000
+      title: "🌀 Storyline Sage"
+      description: "You've mastered multiple routes, understanding complex character motivations and plot intricacies. 🌀"
+    - points: 100000
+      title: "🌟 Legendary Storyteller"
+      description: "You've mastered visual novels of all kinds, understanding every twist and emotional nuance! 🌟"
+    - points: 200000
+      title: "👾 God of Visual Novels"
+      description: "You've ascended to the realm of the divine, weaving together every storyline and character arc with omnipotent comprehension! No narrative escapes your grasp. 👾"
+
+  Manga:
+    - points: 1
+      title: "📜 Page Turner"
+      description: "You've opened your first manga, exploring Japanese stories one page at a time! 📜"
+    - points: 100
+      title: "📚 Chapter Chaser"
+      description: "You've made it through multiple chapters, starting to recognize key vocabulary and expressions! 📚"
+    - points: 1000
+      title: "💬 Speech Bubble Sage"
+      description: "Following dialogue and action, you're understanding manga conversations and emotions. 💬"
+    - points: 5000
+      title: "🌌 Panel Prodigy"
+      description: "You're handling complex storylines, reading comfortably without constant look-ups! 🌌"
+    - points: 15000
+      title: "📖 Storyline Specialist"
+      description: "You can read through entire volumes, understanding intricate plot details and character growth. 📖"
+    - points: 50000
+      title: "✨ Manga Virtuoso"
+      description: "You've gained the ability to understand advanced manga storylines and cultural nuances with ease. ✨"
+    - points: 100000
+      title: "👾 Comic Conqueror"
+      description: "You've reached the pinnacle of manga reading, effortlessly understanding every story and cultural detail! 👾"
+    - points: 200000
+      title: "🌀 Manga Deity"
+      description: "You are the god of manga, able to see through every panel and page, unraveling every detail with unparalleled divine insight! 🌀"
+
+  Anime:
+    - points: 1
+      title: "🎭 Opening Act"
+      description: "You've watched your first anime episode, diving into Japanese language and culture! 🎭"
+    - points: 100
+      title: "✨ Anime Samurai"
+      description: "You're starting to pick up on key words and common phrases. ✨"
+    - points: 1000
+      title: "🌠 Genre Guru"
+      description: "From shonen to shojo, you're understanding a variety of anime genres with growing comprehension! 🌠"
+    - points: 10000
+      title: "🎉 Seasoned Senpai"
+      description: "You're watching anime comfortably, picking up subtleties in dialogue and story. 🎉"
+    - points: 30000
+      title: "⚡ Dialogue Dynamo"
+      description: "You understand complex dialogues and cultural references, enjoying anime at a deeper level. ⚡"
+    - points: 75000
+      title: "✨ Anime Aficionado"
+      description: "You've developed a refined understanding of anime themes, character arcs, and underlying cultural subtleties. ✨"
+    - points: 100000
+      title: "🌟 Otaku Overlord"
+      description: "You've become an anime master, understanding every genre, plot twist, and character arc with ease! 🌟"
+    - points: 200000
+      title: "🔥 Anime God"
+      description: "You have transcended mere fandom and become a true deity of anime, understanding every nuance and unraveling the deepest mysteries of every genre. Nothing escapes your divine vision! 🔥"
+
+  Listening:
+    - points: 1
+      title: "🎧 Language Listener"
+      description: "You've begun listening to Japanese media , your ears are just getting warmed up! 🎧"
+    - points: 100
+      title: "🎵 Audio Adventurer"
+      description: "Regular listening practice is paying off; you're understanding common phrases! 🎵"
+    - points: 1000
+      title: "🎧 Dialogue Decoder"
+      description: "You can understand spoken Japanese at a natural speed, grasping complex dialogues. 🎧"
+    - points: 5000
+      title: "🎼 Sound Samurai"
+      description: "You're a pro, understanding context, slang, and tone in any conversation! 🎼"
+    - points: 15000
+      title: "🎙️ Conversational Conqueror"
+      description: "You've reached a high level of listening comprehension, comfortably following fast-paced conversations. 🎙️"
+    - points: 50000
+      title: "✨ Auditory Expert"
+      description: "Your listening skills have reached a level where you can catch subtle tones and advanced expressions effortlessly. ✨"
+    - points: 100000
+      title: "🌟 Auditory Ace"
+      description: "You've achieved auditory mastery, effortlessly understanding every nuance of spoken Japanese. 🌟"
+    - points: 200000
+      title: "🎶 God of Listening"
+      description: "Your ears have ascended to a divine plane, capturing every syllable, tone, and hidden meaning with godly precision. The spoken word bows before you! 🎶"
+
+  Reading:
+    - points: 1
+      title: "📄 Character Catcher"
+      description: "You've started recognizing Japanese characters. The reading journey begins! 📄"
+    - points: 500
+      title: "🔤 Kana Connoisseur"
+      description: "You're getting more familiar with kana, building reading confidence. 🔤"
+    - points: 2000
+      title: "🈶 Vocabulary Voyager"
+      description: "You can read common words and phrases across various texts! 🈶"
+    - points: 10000
+      title: "空 Kanji Keeper"
+      description: "Comfortable with kanji, you're reading intermediate texts with ease! 空"
+    - points: 30000
+      title: "📚 Script Scholar"
+      description: "You're comfortable with a wide range of kanji, reading advanced texts smoothly. 📚"
+    - points: 75000
+      title: "✨ Text Tactician"
+      description: "You navigate advanced Japanese texts, understanding complex vocabulary and contextual nuances. ✨"
+    - points: 100000
+      title: "👑 Script Shogun"
+      description: "You've reached the highest level of reading mastery, easily navigating native texts of all kinds. 👑"
+    - points: 200000
+      title: "📜 God of Reading"
+      description: "You've reached divine comprehension, able to read and understand every character, kanji, and cultural reference as if it were second nature. The written word bends to your will! 📜"

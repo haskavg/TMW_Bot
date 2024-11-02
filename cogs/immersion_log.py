@@ -3,7 +3,7 @@ from lib.anilist_autocomplete import CACHED_ANILIST_RESULTS_CREATE_TABLE_QUERY, 
 from lib.vndb_autocomplete import CACHED_VNDB_RESULTS_CREATE_TABLE_QUERY, CACHED_VNDB_THUMBNAIL_QUERY, CACHED_VNDB_TITLE_QUERY, CREATE_VNDB_FTS5_TABLE_QUERY, CREATE_VNDB_TRIGGER_DELETE, CREATE_VNDB_TRIGGER_INSERT, CREATE_VNDB_TRIGGER_UPDATE
 from lib.tmdb_autocomplete import CACHED_TMDB_RESULTS_CREATE_TABLE_QUERY, CACHED_TMDB_THUMBNAIL_QUERY, CACHED_TMDB_TITLE_QUERY, CREATE_TMDB_FTS5_TABLE_QUERY, CREATE_TMDB_TRIGGER_DELETE, CREATE_TMDB_TRIGGER_INSERT, CREATE_TMDB_TRIGGER_UPDATE, CACHED_TMDB_GET_MEDIA_TYPE_QUERY
 from lib.media_types import MEDIA_TYPES, LOG_CHOICES
-from lib.immersion_helpers import is_valid_channel
+from lib.immersion_helpers import is_valid_channel, get_achievement_reached_info, get_current_and_next_achievement
 from .immersion_goals import check_goal_status
 from .username_fetcher import get_username_db
 
@@ -92,18 +92,6 @@ GET_USER_MONTHLY_POINTS_QUERY = """
     WHERE user_id = ? AND (? = 'ALL' OR strftime('%Y-%m', log_date) = ?)
     AND (? IS NULL OR media_type = ?);
 """
-
-ACHIEVEMENT_THRESHOLDS = [1, 100, 300, 1000, 2000, 10000, 25000, 100000]
-ACHIEVEMENT_TITLES = ACHIEVEMENT_TITLES = [
-    'Beginner 🌱',
-    'Initiate ⚡️',
-    'Apprentice 🎓',
-    'Hobbyist 🥇',
-    'Enthusiast 🔥',
-    'Aficionado 🌟',
-    'Sage 🤖',
-    'Master 🏆'
-]
 
 
 async def log_undo_autocomplete(interaction: discord.Interaction, current_input: str):
@@ -210,6 +198,8 @@ class ImmersionLog(commands.Cog):
         await interaction.response.defer()
 
         points_received = round(amount * MEDIA_TYPES[media_type]['points_multiplier'], 2)
+        achievement_group = MEDIA_TYPES[media_type]['Achievement_Group']
+        total_achievement_points_before = await self.get_total_points_for_achievement_group(interaction.user.id, achievement_group)
 
         current_month_points_before = await self.get_points_for_current_month(interaction.user.id)
 
@@ -223,20 +213,8 @@ class ImmersionLog(commands.Cog):
 
         goal_statuses = await check_goal_status(self.bot, interaction.user.id, media_type)
 
-        achievement_group = MEDIA_TYPES[media_type]['Achievement_Group']
-        total_achievement_points = await self.get_total_points_for_achievement_group(interaction.user.id, achievement_group)
-
-        current_achievement = None
-        next_achievement = None
-        achievement_reached = False
-
-        for threshold, title in zip(ACHIEVEMENT_THRESHOLDS, ACHIEVEMENT_TITLES):
-            if total_achievement_points - points_received < threshold <= total_achievement_points:
-                current_achievement = f"{achievement_group} {title}"
-                achievement_reached = True
-            elif total_achievement_points < threshold:
-                next_achievement = f"{achievement_group} {title} at `{threshold}` {achievement_group} points (Current: `{round(total_achievement_points, 2)}`)"
-                break
+        total_achievement_points_after = total_achievement_points_before + points_received
+        achievement_reached, current_achievement, next_achievement = await get_achievement_reached_info(achievement_group, total_achievement_points_before, total_achievement_points_after)
 
         if interaction.guild:
             random_guild_emoji = random.choice(interaction.guild.emojis)
@@ -268,9 +246,10 @@ class ImmersionLog(commands.Cog):
                             value=f"`{current_month_points_before}` → `{current_month_points_after}`")
         log_embed.add_field(name="Streak", value=f"{consecutive_days} day{'s' if consecutive_days > 1 else ''}")
         if achievement_reached and current_achievement:
-            log_embed.add_field(name="Achievement Reached! 🎉", value=current_achievement, inline=False)
+            log_embed.add_field(name="Achievement Reached! 🎉", value=current_achievement["title"], inline=False)
         if next_achievement:
-            log_embed.add_field(name="Next Achievement", value=next_achievement, inline=False)
+            next_achievement_info = f"{next_achievement['title']} (`{int(total_achievement_points_after)}/{next_achievement['points']}` {achievement_group} points)"
+            log_embed.add_field(name="Next Achievement", value=next_achievement_info, inline=False)
 
         for i, goal_status in enumerate(goal_statuses, start=1):
             if len(log_embed.fields) >= 24:
@@ -288,6 +267,9 @@ class ImmersionLog(commands.Cog):
             await logged_message.reply(f"> {name}")
         elif comment and (comment.startswith("http://") or comment.startswith("https://")):
             await logged_message.reply(f"> {comment}")
+
+        if achievement_reached:
+            await logged_message.reply(f"🎉 **Achievement Reached!** 🎉\n\n**{current_achievement['title']}**\n\n{current_achievement["description"]}")
 
     async def get_consecutive_days_logged(self, user_id: int) -> int:
         result = await self.bot.GET(GET_CONSECUTIVE_DAYS_QUERY, (user_id,))
@@ -380,21 +362,20 @@ class ImmersionLog(commands.Cog):
 
         for achievement_group in set(settings_group['Achievement_Group'] for settings_group in MEDIA_TYPES.values()):
             total_points = await self.get_total_points_for_achievement_group(user_id, achievement_group)
-            current_achievement = None
-            next_achievement = None
-
-            for threshold, title in zip(ACHIEVEMENT_THRESHOLDS, ACHIEVEMENT_TITLES):
-                if total_points >= threshold:
-                    current_achievement = f"- 🎉 **Reached {achievement_group} {title} (`{threshold}` points)**"
-                else:
-                    next_achievement = f"- Next: {achievement_group} {title} (`{round(total_points, 2)}/{threshold}` points)"
-                    break
+            if total_points == 0:
+                continue
+            achievements_list.append(f"\n**-----{achievement_group.upper()}-----**\n")
+            current_achievement, next_achievement = await get_current_and_next_achievement(achievement_group, total_points)
+            if current_achievement:
+                current_achievement_info = f"**Reached {current_achievement['title']} (`{current_achievement['points']}` points)**"
+                current_achievement_info += f"`\n{current_achievement['description']}`"
+            if next_achievement:
+                next_achievement_info = f"\n➤ Next: {next_achievement['title']} (`{int(total_points)}/{next_achievement['points']}` points)"
 
             if current_achievement:
-                achievements_list.append(current_achievement)
+                achievements_list.append(current_achievement_info)
             if next_achievement:
-                achievements_list.append(next_achievement)
-            achievements_list.append("\n---------\n")
+                achievements_list.append(next_achievement_info)
         if achievements_list:
             achievements_str = "\n".join(achievements_list)
         else:
