@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import datetime
 import asyncio
 
-from lib.media_types import MEDIA_TYPES
+from lib.media_types import MEDIA_TYPES, LOG_CHOICES
 from lib.bot import TMWBot
 from lib.immersion_helpers import is_valid_channel
 
@@ -124,17 +124,7 @@ class ImmersionLogMe(commands.Cog):
         to_date='Optional end date (YYYY-MM-DD).',
         immersion_type='Optional type of immersion to filter by (e.g., reading, listening, etc.).'
     )
-    @discord.app_commands.choices(
-        immersion_type=[
-            discord.app_commands.Choice(name="Listening Time", value="Listening Time"),
-            discord.app_commands.Choice(name="Visual Novel", value="Visual Novel"),
-            discord.app_commands.Choice(name="Reading Time", value="Reading Time"),
-            discord.app_commands.Choice(name="Anime", value="Anime"),
-            discord.app_commands.Choice(name="Manga", value="Manga"),
-            discord.app_commands.Choice(name="Book", value="Book"),
-            discord.app_commands.Choice(name="Reading", value="Reading"),
-        ]
-    )
+    @discord.app_commands.choices(immersion_type=LOG_CHOICES)
     async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
