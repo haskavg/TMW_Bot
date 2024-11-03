@@ -65,7 +65,7 @@ def process_logs(logs):
         df_plot = df_plot.resample('ME').sum()
         x_lab = " (year-mounth)"
         date_labels = df_plot.index.strftime("%Y-%m")
-    elif len(df_plot) > 30:
+    elif len(df_plot) > 31:
         df_plot = df_plot.resample('W').sum()
         x_lab = " (year-week)"
         date_labels = df_plot.index.strftime("%Y-%W")
