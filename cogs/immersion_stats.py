@@ -6,8 +6,7 @@ from discord.ext import commands
 
 from typing import Optional
 
-from datetime import datetime, timedelta
-from collections import defaultdict
+from datetime import datetime
 import asyncio
 
 from lib.media_types import MEDIA_TYPES
