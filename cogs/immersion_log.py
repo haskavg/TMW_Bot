@@ -58,6 +58,12 @@ GET_USER_LOGS_QUERY = """
     ORDER BY log_date DESC;
 """
 
+GET_TO_BE_DELETED_LOG_QUERY = """
+    SELECT log_id, media_type, media_name, amount_logged, log_date
+    FROM logs
+    WHERE user_id = ? AND log_id = ?;
+"""
+
 DELETE_LOG_QUERY = """
     DELETE FROM logs
     WHERE log_id = ? AND user_id = ?;
@@ -351,7 +357,7 @@ class ImmersionLog(commands.Cog):
         if log_id not in log_ids:
             return await interaction.response.send_message("The selected log entry does not exist or does not belong to you.", ephemeral=True)
 
-        deleted_log_info = await self.bot.GET(GET_USER_LOGS_QUERY, (interaction.user.id,))
+        deleted_log_info = await self.bot.GET(GET_TO_BE_DELETED_LOG_QUERY, (interaction.user.id, log_id))
         log_id, media_type, media_name, amount_logged, log_date = deleted_log_info[0]
         log_date = datetime.strptime(log_date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
         await self.bot.RUN(DELETE_LOG_QUERY, (log_id, interaction.user.id))
