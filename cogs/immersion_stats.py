@@ -27,30 +27,26 @@ GET_USER_LOGS_FOR_PERIOD_QUERY_WITH_MEDIA_TYPE = GET_USER_LOGS_FOR_PERIOD_QUERY_
 GET_USER_LOGS_FOR_PERIOD_QUERY_BASE += " ORDER BY log_date;"
 
 
-def process_logs(logs):
+def process_logs(logs, immersion_type=None):
     df = pd.DataFrame(logs, columns=['media_type', 'amount_logged', 'points_received', 'log_date'])
     df['log_date'] = pd.to_datetime(df['log_date'])
-
     points_total = df['points_received'].sum()
 
     breakdown = df.groupby('media_type').agg({'amount_logged': 'sum', 'points_received': 'sum'}).reset_index()
     breakdown['unit_name'] = breakdown['media_type'].apply(lambda x: MEDIA_TYPES[x]['unit_name'])
-
     breakdown_str = "\n".join([
         f"{row['media_type']}: {row['amount_logged']} {row['unit_name']}{'s' if row['amount_logged'] > 1 else ''} → {round(row['points_received'], 2)} pts"
         for _, row in breakdown.iterrows()
     ])
 
-    log_dict = defaultdict(lambda: defaultdict(lambda: 0))
-    for log in logs:
-        log_date = pd.to_datetime(log[3])
-        log_dict[log[0]][log_date.date()] += log[2]
+    if immersion_type:
+        df_grouped = df.groupby([df['log_date'].dt.date, 'media_type'])['amount_logged'].sum().unstack(fill_value=0)
+    else:
+        df_grouped = df.groupby([df['log_date'].dt.date, 'media_type'])['points_received'].sum().unstack(fill_value=0)
 
-    df_plot = pd.DataFrame(log_dict).fillna(0)
-    df_plot.index = pd.to_datetime(df_plot.index)
-
-    full_date_range = pd.date_range(start=df_plot.index.min(), end=df_plot.index.max())
-    df_plot = df_plot.reindex(full_date_range, fill_value=0)
+    # Reindexing the index to include the full date range
+    full_date_range = pd.date_range(start=df_grouped.index.min(), end=df_grouped.index.max())
+    df_plot = df_grouped.reindex(full_date_range, fill_value=0)
 
     if len(df_plot) > 365 * 2:
         df_plot = df_plot.resample('QE').sum()
@@ -84,14 +80,15 @@ def process_logs(logs):
     }
 
     fig, ax = plt.subplots(figsize=(16, 12))
-    plt.title('Points Over Time', fontweight='bold', fontsize=20)
-    plt.ylabel('Points', fontweight='bold', fontsize=14)
-    plt.xlabel('Date' + x_lab, fontweight='bold', fontsize=14)
-
-    # Plot the data as a stacked bar chart
     df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
 
-    # Set custom x-axis labels based on the determined date format
+    if immersion_type:
+        plt.title(f"{MEDIA_TYPES[immersion_type]['log_name']}  Over Time", fontweight='bold', fontsize=20)
+        plt.ylabel(MEDIA_TYPES[immersion_type]['unit_name'] + 's', fontweight='bold', fontsize=14)
+    else:
+        plt.title('Points Over Time', fontweight='bold', fontsize=20)
+        plt.ylabel('Points', fontweight='bold', fontsize=14)
+    plt.xlabel('Date' + x_lab, fontweight='bold', fontsize=14)
     ax.set_xticklabels(date_labels)
     plt.xticks(rotation=45, ha='right')
     plt.legend(loc='best')
