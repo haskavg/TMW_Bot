@@ -4,5 +4,7 @@ aiosqlite
 aiohttp
 pyyaml
 matplotlib
+numpy
+seaborn
 pandas
 humanize
