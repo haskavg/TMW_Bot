@@ -106,6 +106,17 @@ class ImmersionLogMe(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
 
+    async def get_user_logs(self, user_id, from_date, to_date, immersion_type=None):
+        if immersion_type:
+            query = GET_USER_LOGS_FOR_PERIOD_QUERY_WITH_MEDIA_TYPE
+            params = (user_id, from_date.strftime('%Y-%m-%d %H:%M:%S'), to_date.strftime('%Y-%m-%d %H:%M:%S'), immersion_type)
+        else:
+            query = GET_USER_LOGS_FOR_PERIOD_QUERY_BASE
+            params = (user_id, from_date.strftime('%Y-%m-%d %H:%M:%S'), to_date.strftime('%Y-%m-%d %H:%M:%S'))
+
+        user_logs = await self.bot.GET(query, params)
+        return user_logs
+
     @discord.app_commands.command(name='log_stats', description='Display an immersion overview for a specified period.')
     @discord.app_commands.describe(
         user='Optional user to display the immersion overview for.',
@@ -131,6 +142,7 @@ class ImmersionLogMe(commands.Cog):
 
         user_id = user.id if user else interaction.user.id
         user_name = await get_username_db(self.bot, user_id)
+
         try:
             if from_date:
                 from_date = datetime.strptime(from_date, '%Y-%m-%d')
@@ -146,18 +158,23 @@ class ImmersionLogMe(commands.Cog):
         except ValueError:
             return await interaction.followup.send("Invalid to_date format. Please use YYYY-MM-DD.", ephemeral=True)
 
-        user_logs = await self.bot.GET(GET_USER_LOGS_FOR_PERIOD_QUERY, (user_id, from_date.strftime('%Y-%m-%d %H:%M:%S'), to_date.strftime('%Y-%m-%d %H:%M:%S')))
+        # Use the get_user_logs method to fetch logs
+        user_logs = await self.get_user_logs(user_id, from_date, to_date, immersion_type)
 
         if not user_logs:
             return await interaction.followup.send("No logs available for the specified period.", ephemeral=True)
 
-        breakdown_str, points_total, buffer = await asyncio.to_thread(process_logs, user_logs)
+        breakdown_str, points_total, buffer = await asyncio.to_thread(process_logs, user_logs, immersion_type)
 
         timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
         embed = discord.Embed(title="Immersion Overview", color=discord.Color.blurple())
         embed.add_field(name="User", value=user_name, inline=True)
         embed.add_field(name="Timeframe", value=timeframe_str, inline=True)
         embed.add_field(name="Points", value=f"{points_total:.2f}", inline=True)
+
+        if immersion_type:
+            embed.add_field(name="Immersion Type", value=immersion_type.capitalize(), inline=True)
+
         embed.add_field(name="Breakdown", value=breakdown_str, inline=False)
 
         file = discord.File(buffer, filename="immersion_overview.png")
