@@ -198,15 +198,20 @@ class ImmersionLogMe(commands.Cog):
         user_logs = await self.bot.GET(query, params)
         return user_logs
 
-    @discord.app_commands.command(name='log_stats', description='Display an immersion overview for a specified period.')
+    @discord.app_commands.command(name='log_stats', description='Display an immersion overview with a specified visualization type.')
     @discord.app_commands.describe(
         user='Optional user to display the immersion overview for.',
         from_date='Optional start date (YYYY-MM-DD).',
         to_date='Optional end date (YYYY-MM-DD).',
-        immersion_type='Optional type of immersion to filter by (e.g., reading, listening, etc.).'
+        immersion_type='Optional type of immersion to filter by (e.g., reading, listening, etc.).',
+        visualization_type='Choose the type of visualization (barchart or heatmap).'
     )
     @discord.app_commands.choices(immersion_type=LOG_CHOICES)
-    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None):
+    @discord.app_commands.choices(visualization_type=[
+        discord.app_commands.Choice(name='Barchart', value='barchart'),
+        discord.app_commands.Choice(name='Heatmap', value='heatmap')
+    ])
+    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, visualization_type: str = 'barchart'):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
         await interaction.response.defer()
@@ -229,13 +234,17 @@ class ImmersionLogMe(commands.Cog):
         except ValueError:
             return await interaction.followup.send("Invalid to_date format. Please use YYYY-MM-DD.", ephemeral=True)
 
-        # Use the get_user_logs method to fetch logs
         user_logs = await self.get_user_logs(user_id, from_date, to_date, immersion_type)
 
         if not user_logs:
             return await interaction.followup.send("No logs available for the specified period.", ephemeral=True)
 
-        breakdown_str, points_total, buffer = await asyncio.to_thread(process_logs, user_logs, immersion_type)
+        breakdown_str, points_total, df_logs = await asyncio.to_thread(process_logs, user_logs)
+
+        if visualization_type == 'barchart':
+            buffer = await asyncio.to_thread(bar_chart, df_logs, immersion_type)
+        elif visualization_type == 'heatmap':
+            buffer = await asyncio.to_thread(heatmap, df_logs)
 
         timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
         embed = discord.Embed(title="Immersion Overview", color=discord.Color.blurple())
