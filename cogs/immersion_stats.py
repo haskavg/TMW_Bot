@@ -1,6 +1,10 @@
 import io
+import numpy as np
+import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import colormaps
+import matplotlib.colors as mcolors
 import discord
 from discord.ext import commands
 
