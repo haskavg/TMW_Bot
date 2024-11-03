@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 from discord.ext import tasks
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 SELFMUTE_SETTINGS_PATH = os.getenv("ALT_SELFMUTE_SETTINGS_PATH") or "config/selfmute_settings.yml"
 with open(SELFMUTE_SETTINGS_PATH, 'r') as settings_file:
@@ -32,6 +32,8 @@ STORE_MUTE_QUERY = """INSERT INTO active_mutes (guild_id, user_id, mute_role_id,
 GET_ALL_MUTES_QUERY = """SELECT * FROM active_mutes WHERE guild_id = ? ORDER BY end_time ASC"""
 
 GET_USER_MUTE_QUERY = """SELECT guild_id, user_id, mute_role_id, roles_to_restore, end_time FROM active_mutes WHERE guild_id = ? AND user_id = ?"""
+
+GET_ALL_USER_MUTES_QUERY = """SELECT guild_id, user_id, mute_role_id, roles_to_restore, end_time FROM active_mutes WHERE user_id = ?"""
 
 REMOVE_MUTE_QUERY = """DELETE FROM active_mutes WHERE guild_id = ? AND user_id = ?"""
 
@@ -148,21 +150,26 @@ class Selfmute(commands.Cog):
     @discord.app_commands.command(name="check_mute", description="Removes your mute if the specified time has already pasted")
     async def check_mute(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
-        mute_data = await self.bot.GET_ONE(GET_USER_MUTE_QUERY, (interaction.guild.id, interaction.user.id))
-        if not mute_data:
+        if not interaction.guild:
+            mute_data = await self.bot.GET(GET_ALL_USER_MUTES_QUERY, (interaction.user.id,))
+        else:
+            mute_data = await self.bot.GET(GET_USER_MUTE_QUERY, (interaction.guild.id, interaction.user.id))
+        if not mute_data and interaction.guild:
             await self.perform_user_unmute(interaction.user, interaction.channel, mute_data)
             await interaction.followup.send("You are not muted.", ephemeral=True)
             return
-        guild_id, user_id, mute_role_id, role_ids_to_restore, unmute_time = mute_data
-        unmute_time = datetime.strptime(unmute_time, "%Y-%m-%d %H:%M:%S")
-        if unmute_time > discord.utils.utcnow().replace(tzinfo=None):
-            await interaction.followup.send(f"You are muted until <t:{int(unmute_time.timestamp())}:F> which is <t:{int(unmute_time.timestamp())}:R>.", ephemeral=True)
-        else:
-            announce_channel_id = selfmute_settings['selfmute_config'].get(
-                interaction.guild.id, {}).get("announce_channel")
-            announce_channel = interaction.guild.get_channel(announce_channel_id)
-            await self.perform_user_unmute(interaction.user, announce_channel, mute_data)
-            await interaction.followup.send("You are not muted anymore.", ephemeral=True)
+        for mute_data_guild in mute_data:
+            guild_id, user_id, mute_role_id, role_ids_to_restore, unmute_time = mute_data_guild
+            mute_guild = self.bot.get_guild(guild_id)
+            unmute_time = datetime.strptime(unmute_time, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            if unmute_time > discord.utils.utcnow():
+                await interaction.followup.send(f"You are muted until <t:{int(unmute_time.timestamp())}:F>" +
+                                                f"which is <t:{int(unmute_time.timestamp())}:R> on `{mute_guild.name}`.", ephemeral=True)
+            else:
+                announce_channel_id = selfmute_settings['selfmute_config'].get(guild_id, {}).get("announce_channel")
+                announce_channel = mute_guild.get_channel(announce_channel_id)
+                await self.perform_user_unmute(interaction.user, announce_channel, mute_data)
+                await interaction.followup.send("You are not muted anymore.", ephemeral=True)
 
     @tasks.loop(minutes=1)
     async def clear_mutes(self):
@@ -172,8 +179,8 @@ class Selfmute(commands.Cog):
             announce_channel = guild.get_channel(announce_channel_id)
             for mute_data in active_mutes:
                 guild_id, user_id, mute_role_id, role_ids_to_restore, unmute_time = mute_data
-                unmute_time = datetime.strptime(unmute_time, "%Y-%m-%d %H:%M:%S")
-                if unmute_time > discord.utils.utcnow().replace(tzinfo=None):
+                unmute_time = datetime.strptime(unmute_time, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                if unmute_time > discord.utils.utcnow().replace():
                     return
                 else:
                     member = guild.get_member(user_id)
