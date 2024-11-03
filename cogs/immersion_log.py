@@ -289,7 +289,7 @@ class ImmersionLog(commands.Cog):
             await logged_message.reply(f"> {comment}")
 
         if achievement_reached:
-            await logged_message.reply(f"🎉 **Achievement Reached!** 🎉\n\n**{current_achievement['title']}**\n\n{current_achievement["description"]}")
+            await logged_message.reply(f"🎉 **Achievement Reached!** 🎉\n\n**{current_achievement['title']}**\n\n{current_achievement['description']}")
 
     async def get_consecutive_days_logged(self, user_id: int) -> int:
         result = await self.bot.GET(GET_CONSECUTIVE_DAYS_QUERY, (user_id,))
