@@ -4,3 +4,6 @@ cogs/testing_*
 .env
 .vscode
 data
+.flake8
+poetry.lock
+*.toml
