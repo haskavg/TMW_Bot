@@ -127,7 +127,60 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
     fig.savefig(buffer, format='png')
     buffer.seek(0)
 
-    return breakdown_str, points_total, buffer
+    return buffer
+
+
+def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
+    df["week"] = df["log_date"].dt.isocalendar().week
+    df["day"] = df["log_date"].dt.weekday
+    df["year"] = df["log_date"].dt.year
+
+    heatmap_data = {}
+    for year, group in df.groupby("year"):
+        year_df = group.pivot_table(
+            index="day", columns="week", values="points_received", aggfunc="sum"
+        )
+
+        # Fill in missing weeks and days with NaN
+        for i in range(1, 53):
+            if i not in year_df.columns:
+                year_df[i] = np.nan
+        for i in range(7):
+            if i not in year_df.index:
+                year_df.loc[i] = np.nan
+        year_df = year_df.sort_index(axis=1).sort_index(axis=0)
+        heatmap_data[year] = year_df
+
+    num_years = len(heatmap_data)
+    # Reverse the colormap by appending '_r'
+    cmap = modify_cmap(cmap + "_r", zero_color="#222222", nan_color="#222222")
+
+    fig, axes = plt.subplots(nrows=num_years, ncols=1, figsize=(12, 2 * num_years))
+
+    # If there's only one year, `axes` is not a list, so we make it a list for consistency
+    if num_years == 1:
+        axes = [axes]
+
+    for ax, (year, df) in zip(axes, heatmap_data.items()):
+        heatmap = sns.heatmap(
+            df,
+            cmap=cmap,
+            linewidths=1.5,
+            linecolor="#2c2c2d",
+            cbar=False,
+            square=True,
+            ax=ax,
+        )
+        ax.set_facecolor("#2c2c2d")
+        ax.set_title(f"Immersion Heatmap - {year}", color="white")
+        ax.axis("off")
+
+    plt.gcf().set_facecolor("#2c2c2d")
+    buffer = io.BytesIO()
+    fig.savefig(buffer, format='png')
+    buffer.seek(0)
+
+    return buffer
 
 
 class ImmersionLogMe(commands.Cog):
