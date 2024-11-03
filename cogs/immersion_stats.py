@@ -17,12 +17,15 @@ from .username_fetcher import get_username_db
 import matplotlib
 matplotlib.use('Agg')
 
-GET_USER_LOGS_FOR_PERIOD_QUERY = """
+GET_USER_LOGS_FOR_PERIOD_QUERY_BASE = """
     SELECT media_type, amount_logged, points_received, log_date
     FROM logs
     WHERE user_id = ? AND log_date BETWEEN ? AND ?
     ORDER BY log_date;
 """
+
+GET_USER_LOGS_FOR_PERIOD_QUERY_WITH_MEDIA_TYPE = GET_USER_LOGS_FOR_PERIOD_QUERY_BASE + " AND media_type = ? ORDER BY log_date;"
+GET_USER_LOGS_FOR_PERIOD_QUERY_BASE += " ORDER BY log_date;"
 
 
 def process_logs(logs):
