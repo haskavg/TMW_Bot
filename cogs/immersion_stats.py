@@ -63,6 +63,10 @@ def process_logs(logs):
         for _, row in breakdown.iterrows()
     ])
 
+    return breakdown_str, points_total, df
+
+
+def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
     if immersion_type:
         df_grouped = df.groupby([df['log_date'].dt.date, 'media_type'])['amount_logged'].sum().unstack(fill_value=0)
     else:
