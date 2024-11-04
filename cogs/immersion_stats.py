@@ -44,11 +44,8 @@ def modify_cmap(cmap_name, zero_color="black", nan_color="black", truncate_high=
     return modified_cmap
 
 
-def process_logs(logs):
-    df = pd.DataFrame(logs, columns=['media_type', 'amount_logged', 'points_received', 'log_date'])
-    df['log_date'] = pd.to_datetime(df['log_date'])
+def embedded_info(df: pd.DataFrame) -> tuple:
     points_total = df['points_received'].sum()
-
     breakdown = df.groupby('media_type').agg({'amount_logged': 'sum', 'points_received': 'sum'}).reset_index()
     breakdown['unit_name'] = breakdown['media_type'].apply(lambda x: MEDIA_TYPES[x]['unit_name'])
     breakdown_str = "\n".join([
@@ -56,7 +53,7 @@ def process_logs(logs):
         for _, row in breakdown.iterrows()
     ])
 
-    return breakdown_str, points_total, df
+    return breakdown_str, points_total
 
 
 def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
