@@ -210,7 +210,7 @@ class ImmersionLogMe(commands.Cog):
         discord.app_commands.Choice(name='Bar chart', value='barchart'),
         discord.app_commands.Choice(name='Heatmap', value='heatmap')
     ])
-    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, visualization_type: Optional[str] = None):
+    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, visualization_type: Optional[str] = 'barchart'):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
         await interaction.response.defer()
