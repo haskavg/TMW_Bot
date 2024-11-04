@@ -2,6 +2,7 @@ import io
 import numpy as np
 import seaborn as sns
 import pandas as pd
+from PIL import Image
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
 import matplotlib.colors as mcolors
@@ -80,6 +81,20 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
     full_date_range = pd.date_range(start=df_grouped.index.min(), end=df_grouped.index.max())
     df_plot = df_grouped.reindex(full_date_range, fill_value=0)
 
+    color_dict = {
+        "Manga": "#b45865",
+        "Anime": "#e48586",
+        "Listening Time": "#ffb4c8",
+        "Book": "#e5afee",
+        "Reading Time": "#b9a7f3",
+        "Visual Novel": "#7d84e4",
+        "Reading": "#77aaee"
+    }
+
+    stacking_order = color_dict.keys()
+    existing_columns = [col for col in stacking_order if col in df_plot.columns]
+    df_plot = df_plot[existing_columns]
+
     if len(df_plot) > 365 * 2:
         df_plot = df_plot.resample('QE').sum()
 
@@ -91,7 +106,7 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
         date_labels = df_plot.index.map(format_quarters)
     elif len(df_plot) > 30 * 7:
         df_plot = df_plot.resample('ME').sum()
-        x_lab = " (year-mounth)"
+        x_lab = " (year-month)"
         date_labels = df_plot.index.strftime("%Y-%m")
     elif len(df_plot) > 31:
         df_plot = df_plot.resample('W').sum()
@@ -101,17 +116,9 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
         date_labels = df_plot.index.strftime("%Y-%m-%d")
         x_lab = ""
 
-    color_dict = {
-        "Book": "tab:orange",
-        "Manga": "tab:red",
-        "Reading": "tab:pink",
-        "Reading Time": "tab:green",
-        "Visual Novel": "tab:cyan",
-        "Anime": "tab:purple",
-        "Listening Time": "tab:blue",
-    }
-
     fig, ax = plt.subplots(figsize=(16, 12))
+    fig.patch.set_facecolor('#2c2c2d')  # Set background color for the whole figure
+    ax.set_facecolor('#2c2c2d')
     df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
 
     if immersion_type:
@@ -124,7 +131,7 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
     ax.set_xticklabels(date_labels)
     plt.xticks(rotation=45, ha='right')
     plt.legend(loc='best')
-    plt.grid()
+    plt.grid(color='#8b8c8c')
 
     buffer = io.BytesIO()
     fig.savefig(buffer, format='png')
@@ -133,7 +140,7 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
     return buffer
 
 
-def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
+def heatmap(df: pd.DataFrame, cmap='Blues') -> io.BytesIO:
     df = df.dropna(subset=["points_received"])
     df = df.set_index("log_date")
     df = df.resample("D").sum()
@@ -155,7 +162,7 @@ def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
     num_years = len(heatmap_data)
     cmap = modify_cmap(cmap + "_r", zero_color="#222222", nan_color="#2c2c2d")
 
-    fig, axes = plt.subplots(nrows=num_years, ncols=1, figsize=(12, 2 * num_years))
+    fig, axes = plt.subplots(nrows=num_years, ncols=1, figsize=(16, 3 * num_years))
 
     if num_years == 1:
         axes = [axes]
@@ -197,20 +204,15 @@ class ImmersionLogMe(commands.Cog):
         user_logs = await self.bot.GET(query, params)
         return user_logs
 
-    @discord.app_commands.command(name='log_stats', description='Display an immersion overview with a specified graph type.')
+    @discord.app_commands.command(name='log_stats', description='Display an immersion overview with a specified.')
     @discord.app_commands.describe(
         user='Optional user to display the immersion overview for.',
         from_date='Optional start date (YYYY-MM-DD).',
         to_date='Optional end date (YYYY-MM-DD).',
         immersion_type='Optional type of immersion to filter by (e.g., reading, listening, etc.).',
-        graph_type='Choose the type of graph (barchart or heatmap).'
     )
     @discord.app_commands.choices(immersion_type=LOG_CHOICES)
-    @discord.app_commands.choices(graph_type=[
-        discord.app_commands.Choice(name='Bar chart', value='barchart'),
-        discord.app_commands.Choice(name='Heatmap', value='heatmap')
-    ])
-    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, graph_type: Optional[str] = 'barchart'):
+    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
         await interaction.response.defer()
@@ -221,11 +223,11 @@ class ImmersionLogMe(commands.Cog):
         try:
             if from_date:
                 from_date = datetime.strptime(from_date, '%Y-%m-%d')
-            elif graph_type == 'heatmap':
-                from_date = datetime.now().replace(month=1, day=1, hour=0, minute=0, second=0)
+                start_of_year = datetime(from_date.year, 1, 1)  # Start of the year for the heatmap
             else:
                 now = datetime.now()
                 from_date = now.replace(day=1, hour=0, minute=0, second=0)
+                start_of_year = datetime(now.year, 1, 1)
         except ValueError:
             return await interaction.followup.send("Invalid from_date format. Please use YYYY-MM-DD.", ephemeral=True)
 
@@ -235,17 +237,41 @@ class ImmersionLogMe(commands.Cog):
         except ValueError:
             return await interaction.followup.send("Invalid to_date format. Please use YYYY-MM-DD.", ephemeral=True)
 
-        user_logs = await self.get_user_logs(user_id, from_date, to_date, immersion_type)
+        # Make a single database request from the start of the year to the end of the requested period
+        user_logs = await self.get_user_logs(user_id, start_of_year, to_date, immersion_type)
 
         if not user_logs:
             return await interaction.followup.send("No logs available for the specified period.", ephemeral=True)
 
+        # Process logs for both bar chart and heatmap
         breakdown_str, points_total, df_logs = await asyncio.to_thread(process_logs, user_logs)
 
-        if graph_type == 'barchart':
-            buffer = await asyncio.to_thread(bar_chart, df_logs, immersion_type)
-        elif graph_type == 'heatmap':
-            buffer = await asyncio.to_thread(heatmap, df_logs)
+        # Filter the DataFrame for the bar chart based on the requested from_date and to_date
+        df_bar_logs = df_logs[(df_logs['log_date'] >= from_date) & (df_logs['log_date'] <= to_date)]
+
+        if df_bar_logs.empty:
+            return await interaction.followup.send("No logs available for the specified period.", ephemeral=True)
+
+        # Generate both the bar chart and the heatmap using the same data
+        bar_buffer = await asyncio.to_thread(bar_chart, df_bar_logs, immersion_type)
+        heatmap_buffer = await asyncio.to_thread(heatmap, df_logs)
+
+        # Combine the images using PIL
+        bar_image = Image.open(bar_buffer)
+        heatmap_image = Image.open(heatmap_buffer)
+
+        # Create a new image with enough space to place both vertically
+        total_height = bar_image.height + heatmap_image.height
+        combined_image = Image.new('RGB', (bar_image.width, total_height))
+
+        # Paste the two images into the combined image
+        combined_image.paste(bar_image, (0, 0))
+        combined_image.paste(heatmap_image, (0, bar_image.height))
+
+        # Save the combined image to a buffer
+        combined_buffer = io.BytesIO()
+        combined_image.save(combined_buffer, format='PNG')
+        combined_buffer.seek(0)
 
         timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
         embed = discord.Embed(title="Immersion Overview", color=discord.Color.blurple())
@@ -258,8 +284,8 @@ class ImmersionLogMe(commands.Cog):
 
         embed.add_field(name="Breakdown", value=breakdown_str, inline=False)
 
-        file = discord.File(buffer, filename="immersion_overview.png")
-        embed.set_image(url="attachment://immersion_overview.png")
+        file = discord.File(combined_buffer, filename="immersion_overview_combined.png")
+        embed.set_image(url="attachment://immersion_overview_combined.png")
 
         await interaction.followup.send(embed=embed, file=file)
 
