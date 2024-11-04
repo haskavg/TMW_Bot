@@ -13,7 +13,7 @@ import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 
 from lib.bot import TMWBot
-from lib.media_types import LOG_CHOICES
+from lib.media_types import LOG_CHOICES, MEDIA_TYPES
 from lib.immersion_helpers import is_valid_channel
 from .username_fetcher import get_username_db
 
@@ -93,7 +93,7 @@ class ImmersionBarRaces(commands.Cog):
         # Generate chart title
         title = f"{'Points' if race_type == 'points' else 'Amount'} Race"
         if media_type:
-            title += f" - {media_type}"
+            title += f" - {MEDIA_TYPES[media_type]['log_name']}"
         title += f"\n{start_date.split()[0]} to {end_date.split()[0]}"
 
         # Create temporary file for video output
@@ -132,7 +132,7 @@ class ImmersionBarRaces(commands.Cog):
                                   race_type=[discord.app_commands.Choice(name='Points', value='points'),
                                              discord.app_commands.Choice(name='Amount', value='amount')])
     @discord.app_commands.guild_only()
-    @discord.app_commands.default_permissions(administrator=True)
+    @discord.app_commands.default_permissions(manage_messages=True)
     async def log_race(self, interaction: discord.Interaction, from_date: str, to_date: str, media_type: Optional[str] = None, race_type: Optional[str] = 'points'):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
