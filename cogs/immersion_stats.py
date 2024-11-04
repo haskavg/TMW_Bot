@@ -149,14 +149,13 @@ def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
         year_begins_on = group.index.date.min().weekday()
         for date, row in group.iterrows():
             heat[row["day"], (date.dayofyear + year_begins_on - 1) // 7] = row["points_received"]
-        np.savetxt('output.csv', heat, delimiter=',', fmt='%s')
         year_df = pd.DataFrame(heat, columns=range(1, 54), index=range(7))
         year_df = year_df.sort_index(axis=1).sort_index(axis=0)
         heatmap_data[year] = year_df
 
     num_years = len(heatmap_data)
     # Reverse the colormap by appending '_r'
-    cmap = modify_cmap(cmap + "_r", zero_color="#222222", nan_color="#222222")
+    cmap = modify_cmap(cmap + "_r", zero_color="#222222", nan_color="#2c2c2d")
 
     fig, axes = plt.subplots(nrows=num_years, ncols=1, figsize=(12, 2 * num_years))
 
@@ -165,7 +164,7 @@ def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
         axes = [axes]
 
     for ax, (year, df) in zip(axes, heatmap_data.items()):
-        heatmap = sns.heatmap(
+        sns.heatmap(
             df,
             cmap=cmap,
             linewidths=1.5,
