@@ -146,6 +146,9 @@ class ImmersionBarRaces(commands.Cog):
         if end_date < start_date:
             return await interaction.response.send_message("End date must be after start date.", ephemeral=True)
 
+        if (end_date - start_date).days > 31:
+            return await interaction.response.send_message("Date range must be 31 days or less (subject to change...)", ephemeral=True)
+
         await interaction.response.defer()
 
         logs_data = await self.bot.GET(GET_LOGS_FOR_RACE_QUERY, (start_date.strftime('%Y-%m-%d 00:00:00'), end_date.strftime('%Y-%m-%d 23:59:59'), media_type, media_type))
@@ -175,7 +178,6 @@ class ImmersionBarRaces(commands.Cog):
                 start_datetime
             ])
 
-        # Combine initial zeros with actual logs
         logs_with_names = initial_logs + logs_with_names
 
         buffer = await asyncio.to_thread(self.generate_bar_race, logs_with_names, from_date, to_date, media_type, race_type)
