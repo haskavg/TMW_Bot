@@ -56,16 +56,16 @@ def embedded_info(df: pd.DataFrame) -> tuple:
     return breakdown_str, points_total
 
 
-def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
+def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, immersion_type: str = None) -> io.BytesIO:
+    bar_df = df[from_date:to_date]
     if immersion_type:
-        df_grouped = df.groupby([df['log_date'].dt.date, 'media_type'])['amount_logged'].sum().unstack(fill_value=0)
+        bar_df = bar_df.pivot_table(index=bar_df.index.date, columns='media_type', values='amount_logged', aggfunc='sum', fill_value=0)
     else:
-        df_grouped = df.groupby([df['log_date'].dt.date, 'media_type'])['points_received'].sum().unstack(fill_value=0)
+        bar_df = bar_df.pivot_table(index=bar_df.index.date, columns='media_type', values='points_received', aggfunc='sum', fill_value=0)
+    bar_df.index = pd.DatetimeIndex(bar_df.index)
 
-    # Reindexing the index to include the full date range
-    full_date_range = pd.date_range(start=df_grouped.index.min(), end=df_grouped.index.max())
-    df_plot = df_grouped.reindex(full_date_range, fill_value=0)
-
+    time_frame = pd.date_range(bar_df.index.date.min(), to_date, freq='D')
+    bar_df = bar_df.reindex(time_frame, fill_value=0)
     color_dict = {
         "Manga": "#b45865",
         "Anime": "#e48586",
@@ -75,100 +75,101 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
         "Visual Novel": "#7d84e4",
         "Reading": "#77aaee"
     }
-
     stacking_order = color_dict.keys()
-    existing_columns = [col for col in stacking_order if col in df_plot.columns]
-    df_plot = df_plot[existing_columns]
+    existing_columns = [col for col in stacking_order if col in bar_df.columns]
+    bar_df = bar_df[existing_columns]
 
-    if len(df_plot) > 365 * 2:
-        df_plot = df_plot.resample('QE').sum()
+    if not isinstance(bar_df.index, pd.DatetimeIndex):
+        bar_df.index = pd.to_datetime(bar_df.index)
 
-        def format_quarters(date):
-            quarter = (date.month - 1) // 3 + 1
-            return f"{date.year}-Q{quarter}"
-
+    if len(bar_df) > 365 * 2:
+        df_plot = bar_df.resample('QE').sum()
         x_lab = " (year-quarter)"
-        date_labels = df_plot.index.map(format_quarters)
-    elif len(df_plot) > 30 * 7:
-        df_plot = df_plot.resample('ME').sum()
+        date_labels = df_plot.index.map(lambda date: f"{date.year}-Q{(date.month - 1) // 3 + 1}")
+    elif len(bar_df) > 30 * 7:
+        df_plot = bar_df.resample('ME').sum()
         x_lab = " (year-month)"
         date_labels = df_plot.index.strftime("%Y-%m")
-    elif len(df_plot) > 31:
-        df_plot = df_plot.resample('W').sum()
+    elif len(bar_df) > 31:
+        df_plot = bar_df.resample('W').sum()
         x_lab = " (year-week)"
         date_labels = df_plot.index.strftime("%Y-%W")
     else:
+        df_plot = bar_df
         date_labels = df_plot.index.strftime("%Y-%m-%d")
         x_lab = ""
 
-    fig, ax = plt.subplots(figsize=(16, 12))
-    fig.patch.set_facecolor('#2c2c2d')  # Set background color for the whole figure
-    ax.set_facecolor('#2c2c2d')
-    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
-
-    if immersion_type:
-        plt.title(f"{MEDIA_TYPES[immersion_type]['log_name']}  Over Time", fontweight='bold', fontsize=20)
-        plt.ylabel(MEDIA_TYPES[immersion_type]['unit_name'] + 's', fontweight='bold', fontsize=14)
-    else:
-        plt.title('Points Over Time', fontweight='bold', fontsize=20)
-        plt.ylabel('Points', fontweight='bold', fontsize=14)
-    plt.xlabel('Date' + x_lab, fontweight='bold', fontsize=14)
-    ax.set_xticklabels(date_labels)
-    plt.xticks(rotation=45, ha='right')
-    plt.legend(loc='best')
-    plt.grid(color='#8b8c8c')
-
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format='png')
-    buffer.seek(0)
-
-    return buffer
-
-
-def heatmap(df: pd.DataFrame, cmap='Blues') -> io.BytesIO:
-    df = df.dropna(subset=["points_received"])
-    df = df.set_index("log_date")
     df = df.resample("D").sum()
     full_date_range = pd.date_range(start=datetime(df.index.year.min(), 1, 1), end=datetime(df.index.year.max(), 12, 31))
     df = df.reindex(full_date_range, fill_value=0)
     df["day"] = df.index.weekday
     df["year"] = df.index.year
-
     heatmap_data = {}
     for year, group in df.groupby("year"):
         heat_array = np.full((7, 53), fill_value=np.nan)
         year_begins_on = group.index.date.min().weekday()
         for date, row in group.iterrows():
-            heat_array[row["day"], (date.dayofyear + year_begins_on - 1) // 7] = row["points_received"]
+            week_num = (date.dayofyear + year_begins_on - 1) // 7
+            heat_array[row["day"], week_num] = row["points_received"]
         year_df = pd.DataFrame(heat_array, columns=range(1, 54), index=range(7))
-        year_df = year_df.sort_index(axis=1).sort_index(axis=0)
         heatmap_data[year] = year_df
 
+    cmap = modify_cmap('Blues_r', zero_color="#222222", nan_color="#2c2c2d")
+
     num_years = len(heatmap_data)
-    cmap = modify_cmap(cmap + "_r", zero_color="#222222", nan_color="#2c2c2d")
+    fig_height = 8 + num_years * 3
+    combined_fig = plt.figure(figsize=(16, fig_height))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[4, num_years], figure=combined_fig)
+    combined_fig.patch.set_facecolor('#2c2c2d')
 
-    fig, axes = plt.subplots(nrows=num_years, ncols=1, figsize=(16, 3 * num_years))
+    ax_bar = combined_fig.add_subplot(gs[0])
+    ax_bar.set_facecolor('#2c2c2d')
+    df_plot.plot(kind='bar', stacked=True, ax=ax_bar, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
+    if immersion_type:
+        ax_bar.set_title(f"{MEDIA_TYPES[immersion_type]['log_name']}  Over Time", fontweight='bold', fontsize=20)
+        ax_bar.set_ylabel(MEDIA_TYPES[immersion_type]['unit_name'] + 's', fontweight='bold', fontsize=14)
+        ax_bar.get_legend().remove()
+    else:
+        ax_bar.set_title('Points Over Time', fontweight='bold', fontsize=20)
+        ax_bar.set_ylabel('Points', fontweight='bold', fontsize=14)
+        ax_bar.legend(title='Media Type', title_fontsize='14', fontsize='12', loc='best')
+    ax_bar.set_xlabel('Date' + x_lab, fontweight='bold', fontsize=14)
+    ax_bar.set_xticklabels(date_labels, rotation=45, ha='right')
+    ax_bar.grid(color='#8b8c8c')
 
-    if num_years == 1:
-        axes = [axes]
-
-    for ax, (year, df) in zip(axes, heatmap_data.items()):
+    gs_heatmaps = gridspec.GridSpecFromSubplotSpec(num_years, 1, subplot_spec=gs[1], hspace=0.4)
+    current_date = datetime.now().date()
+    for i, (year, data) in enumerate(heatmap_data.items()):
+        ax_heat = combined_fig.add_subplot(gs_heatmaps[i])
         sns.heatmap(
-            df,
+            data,
             cmap=cmap,
             linewidths=1.5,
             linecolor="#2c2c2d",
             cbar=False,
             square=True,
-            ax=ax,
+            ax=ax_heat
         )
-        ax.set_facecolor("#2c2c2d")
-        ax.set_title(f"Immersion Heatmap - {year}", color="white")
-        ax.axis("off")
+        ax_heat.set_facecolor("#2c2c2d")
+        ax_heat.set_title(f"Immersion Heatmap - {year}", color="white")
+        ax_heat.axis("off")
 
-    plt.gcf().set_facecolor("#2c2c2d")
+        if current_date.year == year:
+            current_week = (current_date.timetuple().tm_yday + current_date.weekday() - 1) // 7
+            current_day = current_date.weekday()
+            rect = patches.Rectangle(
+                (current_week, current_day),
+                1, 1,
+                linewidth=2,
+                edgecolor='black',
+                facecolor='none'
+            )
+            ax_heat.add_patch(rect)
+
+    plt.tight_layout(pad=2.0, h_pad=2.0)
+
     buffer = io.BytesIO()
-    fig.savefig(buffer, format='png')
+    combined_fig.savefig(buffer, format='png', facecolor=combined_fig.get_facecolor(), bbox_inches='tight')
     buffer.seek(0)
 
     return buffer
@@ -212,7 +213,7 @@ class ImmersionLogMe(commands.Cog):
             else:
                 now = datetime.now()
                 from_date = now.replace(day=1, hour=0, minute=0, second=0)
-                start_of_year = datetime(now.year, 1, 1)
+                start_of_year = datetime(now.year, 1, 1, 0, 0, 0)
         except ValueError:
             return await interaction.followup.send("Invalid from_date format. Please use YYYY-MM-DD.", ephemeral=True)
 
