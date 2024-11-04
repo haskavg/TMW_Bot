@@ -145,17 +145,12 @@ def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
 
     heatmap_data = {}
     for year, group in df.groupby("year"):
-        year_df = group.pivot_table(
-            index="day", columns="week", values="points_received", aggfunc="sum"
-        )
-
-        # Fill in missing weeks and days with NaN
-        for i in range(1, 53):
-            if i not in year_df.columns:
-                year_df[i] = np.nan
-        for i in range(7):
-            if i not in year_df.index:
-                year_df.loc[i] = np.nan
+        heat = np.full((7, 53), fill_value=np.nan)
+        year_begins_on = group.index.date.min().weekday()
+        for date, row in group.iterrows():
+            heat[row["day"], (date.dayofyear + year_begins_on - 1) // 7] = row["points_received"]
+        np.savetxt('output.csv', heat, delimiter=',', fmt='%s')
+        year_df = pd.DataFrame(heat, columns=range(1, 54), index=range(7))
         year_df = year_df.sort_index(axis=1).sort_index(axis=0)
         heatmap_data[year] = year_df
 
