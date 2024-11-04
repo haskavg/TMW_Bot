@@ -2,7 +2,6 @@ import io
 import numpy as np
 import seaborn as sns
 import pandas as pd
-from PIL import Image
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
 from matplotlib import gridspec, patches
