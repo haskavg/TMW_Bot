@@ -126,29 +126,52 @@ def process_heatmap_data(df: pd.DataFrame, from_date: datetime, to_date: datetim
         year_df = pd.DataFrame(heat_array, columns=range(1, 54), index=range(7))
         heatmap_data[year] = year_df
 
+    return heatmap_data
+
+
+def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, immersion_type: str = None) -> io.BytesIO:
+    # Apply consistent plot styles
+    set_plot_styles()
+
+    color_dict = {
+        "Manga": "#b45865",
+        "Anime": "#e48586",
+        "Listening Time": "#ffb4c8",
+        "Book": "#e5afee",
+        "Reading Time": "#b9a7f3",
+        "Visual Novel": "#7d84e4",
+        "Reading": "#77aaee"
+    }
+    df_plot, x_lab, date_labels = process_bar_data(df, from_date, to_date, color_dict, immersion_type)
+    heatmap_data = process_heatmap_data(df, from_date, to_date)
+
     cmap = modify_cmap('Blues_r', zero_color="#222222", nan_color="#2c2c2d")
 
     num_years = len(heatmap_data)
-    fig_height = 8 + num_years * 3
+    fig_height = 10 + num_years * 3
     combined_fig = plt.figure(figsize=(16, fig_height))
     gs = gridspec.GridSpec(2, 1, height_ratios=[4, num_years], figure=combined_fig)
     combined_fig.patch.set_facecolor('#2c2c2d')
 
+    # Plot the bar chart
     ax_bar = combined_fig.add_subplot(gs[0])
-    ax_bar.set_facecolor('#2c2c2d')
     df_plot.plot(kind='bar', stacked=True, ax=ax_bar, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
+    ax_bar.set_title('Points Over Time' if not immersion_type else f"{MEDIA_TYPES[immersion_type]['log_name']} Over Time")
+    ax_bar.set_ylabel('Points' if not immersion_type else MEDIA_TYPES[immersion_type]['unit_name'] + 's')
+    ax_bar.set_xlabel('Date' + x_lab)
+    ax_bar.set_xticklabels(date_labels, rotation=45, ha='right')
+    ax_bar.grid(color='#8b8c8c', axis='y')
     if immersion_type:
-        ax_bar.set_title(f"{MEDIA_TYPES[immersion_type]['log_name']}  Over Time", fontweight='bold', fontsize=20)
-        ax_bar.set_ylabel(MEDIA_TYPES[immersion_type]['unit_name'] + 's', fontweight='bold', fontsize=14)
         ax_bar.get_legend().remove()
     else:
-        ax_bar.set_title('Points Over Time', fontweight='bold', fontsize=20)
-        ax_bar.set_ylabel('Points', fontweight='bold', fontsize=14)
-        ax_bar.legend(title='Media Type', title_fontsize='14', fontsize='12', loc='best')
-    ax_bar.set_xlabel('Date' + x_lab, fontweight='bold', fontsize=14)
-    ax_bar.set_xticklabels(date_labels, rotation=45, ha='right')
-    ax_bar.grid(color='#8b8c8c')
+        ax_bar.legend(title='Media Type', title_fontsize=14, fontsize=12, loc='best')
+    for spine_name, spine in ax_bar.spines.items():
+        if spine_name != 'bottom':
+            spine.set_visible(False)
 
+
+
+    # Plot the heatmaps
     gs_heatmaps = gridspec.GridSpecFromSubplotSpec(num_years, 1, subplot_spec=gs[1], hspace=0.4)
     current_date = datetime.now().date()
     for i, (year, data) in enumerate(heatmap_data.items()):
@@ -162,10 +185,10 @@ def process_heatmap_data(df: pd.DataFrame, from_date: datetime, to_date: datetim
             square=True,
             ax=ax_heat
         )
-        ax_heat.set_facecolor("#2c2c2d")
-        ax_heat.set_title(f"Immersion Heatmap - {year}", color="white")
+        ax_heat.set_title(f"Heatmap - {year}")
         ax_heat.axis("off")
 
+        # Highlight the current day with a dark border
         if current_date.year == year:
             current_week = (current_date.timetuple().tm_yday + current_date.weekday() - 1) // 7
             current_day = current_date.weekday()
@@ -258,6 +281,7 @@ class ImmersionLogMe(commands.Cog):
         embed.set_image(url='attachment://immersion_overview.png')
 
         await interaction.followup.send(file=file, embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(ImmersionLogMe(bot))
