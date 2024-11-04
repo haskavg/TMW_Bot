@@ -83,15 +83,6 @@ def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, c
 
     time_frame = pd.date_range(bar_df.index.date.min(), to_date, freq='D')
     bar_df = bar_df.reindex(time_frame, fill_value=0)
-    color_dict = {
-        "Manga": "#b45865",
-        "Anime": "#e48586",
-        "Listening Time": "#ffb4c8",
-        "Book": "#e5afee",
-        "Reading Time": "#b9a7f3",
-        "Visual Novel": "#7d84e4",
-        "Reading": "#77aaee"
-    }
     stacking_order = color_dict.keys()
     existing_columns = [col for col in stacking_order if col in bar_df.columns]
     bar_df = bar_df[existing_columns]
