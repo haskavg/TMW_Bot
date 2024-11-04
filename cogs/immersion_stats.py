@@ -5,19 +5,16 @@ import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
+from matplotlib import gridspec, patches
 import matplotlib.colors as mcolors
 import discord
 from discord.ext import commands
-
 from typing import Optional
-
 from datetime import datetime
 import asyncio
-
 from lib.media_types import MEDIA_TYPES, LOG_CHOICES
 from lib.bot import TMWBot
 from lib.immersion_helpers import is_valid_channel
-
 from .username_fetcher import get_username_db
 import matplotlib
 matplotlib.use('Agg')
