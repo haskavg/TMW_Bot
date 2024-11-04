@@ -107,6 +107,10 @@ def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, c
         date_labels = df_plot.index.strftime("%Y-%m-%d")
         x_lab = ""
 
+    return df_plot, x_lab, date_labels
+
+
+def process_heatmap_data(df: pd.DataFrame, from_date: datetime, to_date: datetime) -> pd.DataFrame:
     df = df.resample("D").sum()
     full_date_range = pd.date_range(start=datetime(df.index.year.min(), 1, 1), end=datetime(df.index.year.max(), 12, 31))
     df = df.reindex(full_date_range, fill_value=0)
