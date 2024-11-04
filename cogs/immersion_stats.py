@@ -55,7 +55,6 @@ def embedded_info(df: pd.DataFrame) -> tuple:
     return breakdown_str, points_total
 
 
-# Define a function or dictionary to set consistent styles
 def set_plot_styles():
     plt.rcParams.update({
         'axes.titlesize': 20,
@@ -169,8 +168,6 @@ def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, imme
         if spine_name != 'bottom':
             spine.set_visible(False)
 
-
-
     # Plot the heatmaps
     gs_heatmaps = gridspec.GridSpecFromSubplotSpec(num_years, 1, subplot_spec=gs[1], hspace=0.4)
     current_date = datetime.now().date()
@@ -244,7 +241,7 @@ class ImmersionLogMe(commands.Cog):
         try:
             if from_date:
                 from_date = datetime.strptime(from_date, '%Y-%m-%d')
-                start_of_year = datetime(from_date.year, 1, 1)  # Start of the year for the heatmap
+                start_of_year = datetime(from_date.year, 1, 1)
             else:
                 now = datetime.now()
                 from_date = now.replace(day=1, hour=0, minute=0, second=0)
