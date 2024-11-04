@@ -147,8 +147,8 @@ def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, imme
     cmap = modify_cmap('Blues_r', zero_color="#222222", nan_color="#2c2c2d")
 
     num_years = len(heatmap_data)
-    fig_height = 10 + num_years * 3
-    combined_fig = plt.figure(figsize=(16, fig_height))
+    fig_height = 12 + num_years * 3
+    combined_fig = plt.figure(figsize=(18, fig_height))
     gs = gridspec.GridSpec(2, 1, height_ratios=[4, num_years], figure=combined_fig)
     combined_fig.patch.set_facecolor('#2c2c2d')
 
