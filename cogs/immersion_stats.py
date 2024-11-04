@@ -32,15 +32,6 @@ GET_USER_LOGS_FOR_PERIOD_QUERY_BASE += " ORDER BY log_date;"
 def modify_cmap(cmap_name, zero_color="black", nan_color="black", truncate_high=0.7):
     """
     Modify a colormap to have specific colors for 0 and NaN values, and truncate the upper range.
-
-    Parameters:
-    - cmap_name: str, the name of the base colormap.
-    - zero_color: str or tuple, color to be used for 0 values.
-    - nan_color: str or tuple, color to be used for NaN values.
-    - truncate_high: float, fraction of the colormap to keep (0 to 1).
-
-    Returns:
-    - new_cmap: A colormap with modified 0 and NaN colors, and truncated upper range.
     """
     base_cmap = colormaps[cmap_name]
     truncated_cmap = base_cmap(np.linspace(0, truncate_high, base_cmap.N))
