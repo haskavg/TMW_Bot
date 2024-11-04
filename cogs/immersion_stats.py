@@ -126,7 +126,6 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
     plt.legend(loc='best')
     plt.grid()
 
-    # Save the plot to a buffer
     buffer = io.BytesIO()
     fig.savefig(buffer, format='png')
     buffer.seek(0)
@@ -145,21 +144,19 @@ def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
 
     heatmap_data = {}
     for year, group in df.groupby("year"):
-        heat = np.full((7, 53), fill_value=np.nan)
+        heat_array = np.full((7, 53), fill_value=np.nan)
         year_begins_on = group.index.date.min().weekday()
         for date, row in group.iterrows():
-            heat[row["day"], (date.dayofyear + year_begins_on - 1) // 7] = row["points_received"]
-        year_df = pd.DataFrame(heat, columns=range(1, 54), index=range(7))
+            heat_array[row["day"], (date.dayofyear + year_begins_on - 1) // 7] = row["points_received"]
+        year_df = pd.DataFrame(heat_array, columns=range(1, 54), index=range(7))
         year_df = year_df.sort_index(axis=1).sort_index(axis=0)
         heatmap_data[year] = year_df
 
     num_years = len(heatmap_data)
-    # Reverse the colormap by appending '_r'
     cmap = modify_cmap(cmap + "_r", zero_color="#222222", nan_color="#2c2c2d")
 
     fig, axes = plt.subplots(nrows=num_years, ncols=1, figsize=(12, 2 * num_years))
 
-    # If there's only one year, `axes` is not a list, so we make it a list for consistency
     if num_years == 1:
         axes = [axes]
 
