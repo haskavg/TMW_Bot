@@ -19,6 +19,8 @@ Commands:
 
 All commands here require administrator permissions by default.
 
+---
+
 #### `bookmark.py`
 
 Lets users bookmark messages by reacting with 🔖. Bookmarked messages are sent to the user's DMs and can be removed with ❌. Also tracks most bookmarked messages per server.
@@ -31,6 +33,8 @@ User Actions:
 * React with 🔖 to bookmark a message
 * React with ❌ on the bookmark DM to remove it
 
+---
+
 #### `custom_role.py`
 
 Lets users create and manage their own custom roles with custom colors and icons (if the server has enough boosts). Custom roles are positioned below a reference role and are automatically removed if the user loses the required permissions.
@@ -42,6 +46,8 @@ Commands:
 
 Note: Users need one of the allowed roles (set by admin) to create and keep custom roles.
 
+---
+
 #### `dumb_db.py`
 
 Simple command that allows users to download a compressed copy of the bot's database file.
@@ -49,11 +55,15 @@ Simple command that allows users to download a compressed copy of the bot's data
 Commands:
 * `/post_db` - Creates a gzipped copy of the database file and posts it to the channel. 
 
+---
+
 #### `event_roles.py`
 
 Automatically creates and manages roles for Discord scheduled events. When an event is created, a corresponding role is made and assigned to participants. The role is automatically deleted when the event ends.
 
 No user commands - fully automatic.
+
+---
 
 #### `gatekeeper.py`
 
@@ -66,6 +76,8 @@ Commands:
 * `/list_role_commands` `<guild_id>` - List all quiz commands and their corresponding reward roles. Guild ID is optional.
 
 Note: Requires configuration in `gatekeeper_settings.yml` to define quiz requirements and role structure.
+
+---
 
 #### `immersion_log.py`, `immersion_goals.py`, `immersion_stats.py`
 
@@ -88,6 +100,8 @@ Goal Management:
 Statistics:
 * `/log_stats` `<user>` `<from_date>` `<to_date>` `<immersion_type>` - Display detailed immersion statistics with graphs. All parameters optional.
 
+---
+
 #### `info.py`
 
 Provides informational commands that display predefined knowledge and documentation to users. Commands and their content are configured through a YAML file.
@@ -96,6 +110,8 @@ Commands:
 * `/info` `<topic>` - Display information about a specific topic.
 
 Note: Requires configuration in `config/info_commands.yml` to define available topics and their content.
+
+---
 
 #### `kneels.py`
 
@@ -107,11 +123,15 @@ Commands:
 User Actions:
 * React with kneel emojis (🧎, 🧎‍♂️, 🧎‍♀️ or custom :ikneel:) to count a kneel for the message author
 
+---
+
 #### `rank_saver.py`
 
 Automatically saves and restores user roles when they leave and rejoin the server. Runs every 10 minutes to save current roles and restores applicable roles when a user rejoins.
 
 Note: Requires configuration in `rank_saver_settings.yml` to define ignored roles and announcement channels. No user commands - fully automatic.
+
+---
 
 #### `selfmute.py`
 
@@ -124,6 +144,8 @@ Commands:
 
 Note: Requires configuration in `selfmute_settings.yml` to define mute roles and announcement channels.
 
+---
+
 #### `sticky_messages.py`
 
 Allows moderators to make messages "sticky" in channels, meaning they will reappear after new messages, making the message always visible at the bottom of the channel.
@@ -131,6 +153,8 @@ Allows moderators to make messages "sticky" in channels, meaning they will reapp
 Commands:
 * `/sticky_last_message` - Make the last message in the channel sticky (ignoring bot commands). Requires manage messages permission by default.
 * `/unsticky` - Remove the current sticky message from the channel. Requires manage messages permission by default.
+
+---
 
 #### `sync.py`
 
@@ -144,6 +168,8 @@ Commands (used with prefix):
 
 Note: All commands require the user to be listed in the AUTHORIZED_USERS environment variable.
 
+---
+
 #### `thread_resolver.py`
 
 Manages help threads in forum channels by tracking solved status and prompting for updates on inactive threads.
@@ -152,6 +178,8 @@ Commands:
 * `/solved` - Mark a help thread as solved, which adds "[SOLVED]" to the title and archives it.
 
 Note: Requires configuration in `thread_resolver_settings.yml` to define help forum channels.
+
+---
 
 #### `username_fetcher.py`
 
