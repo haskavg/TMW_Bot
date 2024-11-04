@@ -128,7 +128,8 @@ def process_heatmap_data(df: pd.DataFrame, from_date: datetime, to_date: datetim
     return heatmap_data
 
 
-def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, immersion_type: str = None) -> io.BytesIO:
+# Function to generate the bar chart
+def generate_bar_chart(df: pd.DataFrame, from_date: datetime, to_date: datetime, immersion_type: str = None) -> io.BytesIO:
     # Apply consistent plot styles
     set_plot_styles()
 
@@ -142,37 +143,43 @@ def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, imme
         "Reading": "#77aaee"
     }
     df_plot, x_lab, date_labels = process_bar_data(df, from_date, to_date, color_dict, immersion_type)
-    heatmap_data = process_heatmap_data(df, from_date, to_date)
 
+    fig, ax = plt.subplots(figsize=(16, 12))
+    fig.patch.set_facecolor('#2c2c2d')
+    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
+    ax.set_title('Points Over Time' if not immersion_type else f"{MEDIA_TYPES[immersion_type]['log_name']} Over Time")
+    ax.set_ylabel('Points' if not immersion_type else MEDIA_TYPES[immersion_type]['unit_name'] + 's')
+    ax.set_xlabel('Date' + x_lab)
+    ax.set_xticklabels(date_labels, rotation=45, ha='right')
+    ax.grid(color='#8b8c8c', axis='y')
+    # remove splines
+    for spline in ax.spines.values():
+        if spline.spine_type != 'bottom':
+            spline.set_visible(False)
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png', facecolor=fig.get_facecolor(), bbox_inches='tight')
+    buffer.seek(0)
+
+    return buffer
+
+
+# Function to generate the heatmap
+def generate_heatmap(df: pd.DataFrame, from_date: datetime, to_date: datetime, immersion_type) -> io.BytesIO:
+    set_plot_styles()
+    heatmap_data = process_heatmap_data(df, from_date, to_date)
     cmap = modify_cmap('Blues_r', zero_color="#222222", nan_color="#2c2c2d")
 
     num_years = len(heatmap_data)
-    fig_height = 12 + num_years * 3
-    combined_fig = plt.figure(figsize=(18, fig_height))
-    gs = gridspec.GridSpec(2, 1, height_ratios=[4, num_years], figure=combined_fig)
-    combined_fig.patch.set_facecolor('#2c2c2d')
+    fig_height = num_years * 3
+    fig, axes = plt.subplots(nrows=num_years, ncols=1, figsize=(18, fig_height))
+    fig.patch.set_facecolor('#2c2c2d')
 
-    # Plot the bar chart
-    ax_bar = combined_fig.add_subplot(gs[0])
-    df_plot.plot(kind='bar', stacked=True, ax=ax_bar, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
-    ax_bar.set_title('Points Over Time' if not immersion_type else f"{MEDIA_TYPES[immersion_type]['log_name']} Over Time")
-    ax_bar.set_ylabel('Points' if not immersion_type else MEDIA_TYPES[immersion_type]['unit_name'] + 's')
-    ax_bar.set_xlabel('Date' + x_lab)
-    ax_bar.set_xticklabels(date_labels, rotation=45, ha='right')
-    ax_bar.grid(color='#8b8c8c', axis='y')
-    if immersion_type:
-        ax_bar.get_legend().remove()
-    else:
-        ax_bar.legend(title='Media Type', title_fontsize=14, fontsize=12, loc='best')
-    for spine_name, spine in ax_bar.spines.items():
-        if spine_name != 'bottom':
-            spine.set_visible(False)
+    if num_years == 1:
+        axes = [axes]
 
-    # Plot the heatmaps
-    gs_heatmaps = gridspec.GridSpecFromSubplotSpec(num_years, 1, subplot_spec=gs[1], hspace=0.4)
     current_date = datetime.now().date()
-    for i, (year, data) in enumerate(heatmap_data.items()):
-        ax_heat = combined_fig.add_subplot(gs_heatmaps[i])
+    for ax, (year, data) in zip(axes, heatmap_data.items()):
         sns.heatmap(
             data,
             cmap=cmap,
@@ -180,10 +187,11 @@ def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, imme
             linecolor="#2c2c2d",
             cbar=False,
             square=True,
-            ax=ax_heat
+            ax=ax
         )
-        ax_heat.set_title(f"Heatmap - {year}")
-        ax_heat.axis("off")
+        # ax.set_title(f"Heatmap - {year}")
+        ax.set_title(f"{MEDIA_TYPES[immersion_type]['Achievement_Group']} Heatmap - {year}" if immersion_type else f"Immersion Heatmap - {year}")
+        ax.axis("off")
 
         # Highlight the current day with a dark border
         if current_date.year == year:
@@ -196,12 +204,12 @@ def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, imme
                 edgecolor='black',
                 facecolor='none'
             )
-            ax_heat.add_patch(rect)
+            ax.add_patch(rect)
 
-    plt.tight_layout(pad=2.0, h_pad=2.0)
+    plt.tight_layout(pad=2.0)
 
     buffer = io.BytesIO()
-    combined_fig.savefig(buffer, format='png', facecolor=combined_fig.get_facecolor(), bbox_inches='tight')
+    plt.savefig(buffer, format='png', facecolor=fig.get_facecolor(), bbox_inches='tight')
     buffer.seek(0)
 
     return buffer
@@ -262,11 +270,12 @@ class ImmersionLogMe(commands.Cog):
 
         if logs_df[from_date:to_date].empty:
             return await interaction.followup.send("No logs found for the specified period.", ephemeral=True)
+        figure_buffer_bar = await asyncio.to_thread(generate_bar_chart, logs_df, from_date, to_date, immersion_type)
+        figure_buffer_heatmap = await asyncio.to_thread(generate_heatmap, logs_df, from_date, to_date, immersion_type)
 
-        figure_buffer = await asyncio.to_thread(generate_plot, logs_df, from_date, to_date, immersion_type)
         breakdown_str, points_total = await asyncio.to_thread(embedded_info, logs_df[from_date:to_date])
-
         timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
+
         embed = discord.Embed(title="Immersion Overview", color=discord.Color.blurple())
         embed.add_field(name="User", value=user_name, inline=True)
         embed.add_field(name="Timeframe", value=timeframe_str, inline=True)
@@ -274,10 +283,13 @@ class ImmersionLogMe(commands.Cog):
         if immersion_type:
             embed.add_field(name="Immersion Type", value=immersion_type.capitalize(), inline=True)
         embed.add_field(name="Breakdown", value=breakdown_str, inline=False)
-        file = discord.File(figure_buffer, filename='immersion_overview.png')
-        embed.set_image(url='attachment://immersion_overview.png')
 
-        await interaction.followup.send(file=file, embed=embed)
+        file_bar = discord.File(figure_buffer_bar, filename='bar_chart.png')
+        file_heatmap = discord.File(figure_buffer_heatmap, filename='heatmap.png')
+        embed.set_image(url="attachment://bar_chart.png")
+
+        await interaction.followup.send(file=file_bar, embed=embed)
+        await interaction.followup.send(file=file_heatmap)
 
 
 async def setup(bot):
