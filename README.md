@@ -2,7 +2,7 @@
 
 # TheMoeWay Discord Bot
 
-Multi-purpose Discord bot developed for the TMW Discord server. The bot is designed to be modular and easy to extend with new features. Current features are:
+Multi-purpose Discord bot developed for the TMW Discord server. The bot is designed to be modular and easy to extend with new features.
 
 
 ## Features/Commands
