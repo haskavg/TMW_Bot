@@ -71,7 +71,7 @@ class EventRoles(commands.Cog):
 
         await self.bot.RUN(DELETE_EVENT_ROLE, (guild_id, event_id))
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=5)
     async def sync_event_roles(self):
         event_roles = await self.bot.GET(GET_ALL_EVENT_ROLES)
 
