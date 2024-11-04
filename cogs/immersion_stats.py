@@ -197,20 +197,20 @@ class ImmersionLogMe(commands.Cog):
         user_logs = await self.bot.GET(query, params)
         return user_logs
 
-    @discord.app_commands.command(name='log_stats', description='Display an immersion overview with a specified visualization type.')
+    @discord.app_commands.command(name='log_stats', description='Display an immersion overview with a specified graph type.')
     @discord.app_commands.describe(
         user='Optional user to display the immersion overview for.',
         from_date='Optional start date (YYYY-MM-DD).',
         to_date='Optional end date (YYYY-MM-DD).',
         immersion_type='Optional type of immersion to filter by (e.g., reading, listening, etc.).',
-        visualization_type='Choose the type of visualization (barchart or heatmap).'
+        graph_type='Choose the type of graph (barchart or heatmap).'
     )
     @discord.app_commands.choices(immersion_type=LOG_CHOICES)
-    @discord.app_commands.choices(visualization_type=[
+    @discord.app_commands.choices(graph_type=[
         discord.app_commands.Choice(name='Bar chart', value='barchart'),
         discord.app_commands.Choice(name='Heatmap', value='heatmap')
     ])
-    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, visualization_type: Optional[str] = 'barchart'):
+    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, graph_type: Optional[str] = 'barchart'):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
         await interaction.response.defer()
@@ -221,7 +221,7 @@ class ImmersionLogMe(commands.Cog):
         try:
             if from_date:
                 from_date = datetime.strptime(from_date, '%Y-%m-%d')
-            elif visualization_type == 'heatmap':
+            elif graph_type == 'heatmap':
                 from_date = datetime.now().replace(month=1, day=1, hour=0, minute=0, second=0)
             else:
                 now = datetime.now()
@@ -242,9 +242,9 @@ class ImmersionLogMe(commands.Cog):
 
         breakdown_str, points_total, df_logs = await asyncio.to_thread(process_logs, user_logs)
 
-        if visualization_type == 'barchart':
+        if graph_type == 'barchart':
             buffer = await asyncio.to_thread(bar_chart, df_logs, immersion_type)
-        elif visualization_type == 'heatmap':
+        elif graph_type == 'heatmap':
             buffer = await asyncio.to_thread(heatmap, df_logs)
 
         timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
