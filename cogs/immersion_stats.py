@@ -223,58 +223,29 @@ class ImmersionLogMe(commands.Cog):
         except ValueError:
             return await interaction.followup.send("Invalid to_date format. Please use YYYY-MM-DD.", ephemeral=True)
 
-        # Make a single database request from the start of the year to the end of the requested period
         user_logs = await self.get_user_logs(user_id, start_of_year, to_date, immersion_type)
+        logs_df = pd.DataFrame(user_logs, columns=['media_type', 'amount_logged', 'points_received', 'log_date'])
+        logs_df['log_date'] = pd.to_datetime(logs_df['log_date'])
+        logs_df = logs_df.set_index('log_date')
 
-        if not user_logs:
-            return await interaction.followup.send("No logs available for the specified period.", ephemeral=True)
+        if logs_df[from_date:to_date].empty:
+            return await interaction.followup.send("No logs found for the specified period.", ephemeral=True)
 
-        # Process logs for both bar chart and heatmap
-        breakdown_str, points_total, df_logs = await asyncio.to_thread(process_logs, user_logs)
-
-        # Filter the DataFrame for the bar chart based on the requested from_date and to_date
-        df_bar_logs = df_logs[(df_logs['log_date'] >= from_date) & (df_logs['log_date'] <= to_date)]
-
-        if df_bar_logs.empty:
-            return await interaction.followup.send("No logs available for the specified period.", ephemeral=True)
-
-        # Generate both the bar chart and the heatmap using the same data
-        bar_buffer = await asyncio.to_thread(bar_chart, df_bar_logs, immersion_type)
-        heatmap_buffer = await asyncio.to_thread(heatmap, df_logs)
-
-        # Combine the images using PIL
-        bar_image = Image.open(bar_buffer)
-        heatmap_image = Image.open(heatmap_buffer)
-
-        # Create a new image with enough space to place both vertically
-        total_height = bar_image.height + heatmap_image.height
-        combined_image = Image.new('RGB', (bar_image.width, total_height))
-
-        # Paste the two images into the combined image
-        combined_image.paste(bar_image, (0, 0))
-        combined_image.paste(heatmap_image, (0, bar_image.height))
-
-        # Save the combined image to a buffer
-        combined_buffer = io.BytesIO()
-        combined_image.save(combined_buffer, format='PNG')
-        combined_buffer.seek(0)
+        figure_buffer = await asyncio.to_thread(generate_plot, logs_df, from_date, to_date, immersion_type)
+        breakdown_str, points_total = await asyncio.to_thread(embedded_info, logs_df[from_date:to_date])
 
         timeframe_str = f"{from_date.strftime('%Y-%m-%d')} to {to_date.strftime('%Y-%m-%d')}"
         embed = discord.Embed(title="Immersion Overview", color=discord.Color.blurple())
         embed.add_field(name="User", value=user_name, inline=True)
         embed.add_field(name="Timeframe", value=timeframe_str, inline=True)
         embed.add_field(name="Points", value=f"{points_total:.2f}", inline=True)
-
         if immersion_type:
             embed.add_field(name="Immersion Type", value=immersion_type.capitalize(), inline=True)
-
         embed.add_field(name="Breakdown", value=breakdown_str, inline=False)
+        file = discord.File(figure_buffer, filename='immersion_overview.png')
+        embed.set_image(url='attachment://immersion_overview.png')
 
-        file = discord.File(combined_buffer, filename="immersion_overview_combined.png")
-        embed.set_image(url="attachment://immersion_overview_combined.png")
-
-        await interaction.followup.send(embed=embed, file=file)
-
+        await interaction.followup.send(file=file, embed=embed)
 
 async def setup(bot):
     await bot.add_cog(ImmersionLogMe(bot))
