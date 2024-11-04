@@ -135,9 +135,13 @@ def bar_chart(df: pd.DataFrame, immersion_type: str = None) -> io.BytesIO:
 
 
 def heatmap(df: pd.DataFrame, cmap='Greens') -> io.BytesIO:
-    df["week"] = df["log_date"].dt.isocalendar().week
-    df["day"] = df["log_date"].dt.weekday
-    df["year"] = df["log_date"].dt.year
+    df = df.dropna(subset=["points_received"])
+    df = df.set_index("log_date")
+    df = df.resample("D").sum()
+    full_date_range = pd.date_range(start=datetime(df.index.year.min(), 1, 1), end=datetime(df.index.year.max(), 12, 31))
+    df = df.reindex(full_date_range, fill_value=0)
+    df["day"] = df.index.weekday
+    df["year"] = df.index.year
 
     heatmap_data = {}
     for year, group in df.groupby("year"):
