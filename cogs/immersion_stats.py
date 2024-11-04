@@ -210,10 +210,10 @@ class ImmersionLogMe(commands.Cog):
     )
     @discord.app_commands.choices(immersion_type=LOG_CHOICES)
     @discord.app_commands.choices(visualization_type=[
-        discord.app_commands.Choice(name='Barchart', value='barchart'),
+        discord.app_commands.Choice(name='Bar chart', value='barchart'),
         discord.app_commands.Choice(name='Heatmap', value='heatmap')
     ])
-    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, visualization_type: str = 'barchart'):
+    async def log_stats(self, interaction: discord.Interaction, user: Optional[discord.User] = None, from_date: Optional[str] = None, to_date: Optional[str] = None, immersion_type: Optional[str] = None, visualization_type: Optional[str] = None):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
         await interaction.response.defer()
@@ -224,6 +224,8 @@ class ImmersionLogMe(commands.Cog):
         try:
             if from_date:
                 from_date = datetime.strptime(from_date, '%Y-%m-%d')
+            elif visualization_type == 'heatmap':
+                from_date = datetime.now().replace(month=1, day=1, hour=0, minute=0, second=0)
             else:
                 now = datetime.now()
                 from_date = now.replace(day=1, hour=0, minute=0, second=0)
