@@ -55,7 +55,25 @@ def embedded_info(df: pd.DataFrame) -> tuple:
     return breakdown_str, points_total
 
 
-def generate_plot(df: pd.DataFrame, from_date: datetime, to_date: datetime, immersion_type: str = None) -> io.BytesIO:
+# Define a function or dictionary to set consistent styles
+def set_plot_styles():
+    plt.rcParams.update({
+        'axes.titlesize': 20,
+        'axes.titleweight': 'bold',
+        'axes.labelsize': 14,
+        'axes.labelweight': 'bold',
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+        'axes.facecolor': '#2c2c2d',
+        'figure.facecolor': '#2c2c2d',
+        'text.color': 'white',
+        'axes.labelcolor': 'white',
+        'xtick.color': 'white',
+        'ytick.color': 'white'
+    })
+
+
+def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, color_dict: dict, immersion_type: str = None) -> tuple:
     bar_df = df[from_date:to_date]
     if immersion_type:
         bar_df = bar_df.pivot_table(index=bar_df.index.date, columns='media_type', values='amount_logged', aggfunc='sum', fill_value=0)
