@@ -6,3 +6,5 @@ pyyaml
 matplotlib
 pandas
 humanize
+bar_chart_race
+requests

@@ -10,6 +10,8 @@ with open(IMMERSION_LOG_SETTINGS, "r") as f:
 
 
 async def is_valid_channel(interaction: discord.Interaction) -> bool:
+    if interaction.guild and interaction.user.guild_permissions.administrator:
+        return True
     if interaction.channel.id in immersion_log_settings['immersion_bot']['allowed_log_channels']:
         return True
     if not interaction.user.dm_channel:
