@@ -133,20 +133,11 @@ def generate_bar_chart(df: pd.DataFrame, from_date: datetime, to_date: datetime,
     # Apply consistent plot styles
     set_plot_styles()
 
-    color_dict = {
-        "Manga": "#b45865",
-        "Anime": "#e48586",
-        "Listening Time": "#ffb4c8",
-        "Book": "#e5afee",
-        "Reading Time": "#b9a7f3",
-        "Visual Novel": "#7d84e4",
-        "Reading": "#77aaee"
-    }
     df_plot, x_lab, date_labels = process_bar_data(df, from_date, to_date, color_dict, immersion_type)
 
     fig, ax = plt.subplots(figsize=(16, 12))
     fig.patch.set_facecolor('#2c2c2d')
-    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
+    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[MEDIA_TYPES[col].get('color', 'gray') for col in df_plot.columns])
     ax.set_title('Points Over Time' if not immersion_type else f"{MEDIA_TYPES[immersion_type]['log_name']} Over Time")
     ax.set_ylabel('Points' if not immersion_type else MEDIA_TYPES[immersion_type]['unit_name'] + 's')
     ax.set_xlabel('Date' + x_lab)
