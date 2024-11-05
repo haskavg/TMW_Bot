@@ -150,8 +150,8 @@ class ImmersionBarRaces(commands.Cog):
     @discord.app_commands.guild_only()
     @discord.app_commands.checks.dynamic_cooldown(admin_cooldown)
     async def log_race(self, interaction: discord.Interaction, from_date: str, to_date: str, media_type: Optional[str] = None, race_type: Optional[str] = 'points'):
-        if not await is_valid_channel(interaction):
-            return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
+        # if not await is_valid_channel(interaction):
+        # return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
 
         try:
             start_date = datetime.strptime(from_date, '%Y-%m-%d')

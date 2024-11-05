@@ -70,8 +70,10 @@ class TMWBot(commands.Bot):
     async def on_application_command_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
         if isinstance(error, discord.app_commands.MissingAnyRole):
             await interaction.response.send_message("You do not have the permission to use this command.", ephemeral=True)
+            return
         elif isinstance(error, discord.app_commands.CommandOnCooldown):
             await interaction.response.send_message(f"This command is currently on cooldown. You can use this command again after {int(error.retry_after)} seconds.", ephemeral=True)
+            return
 
         command = interaction.command
         if command is not None:
