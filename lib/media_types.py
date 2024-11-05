@@ -22,6 +22,7 @@ MEDIA_TYPES = {
         "unit_name": "character",
         "source_url": "https://vndb.org/",
         "Achievement_Group": "Visual Novel",
+        "color": "#56B4E9",
     },
     "Manga": {
         "log_name": "Manga (in pages read)",
@@ -34,6 +35,7 @@ MEDIA_TYPES = {
         "unit_name": "page",
         "source_url": "https://anilist.co/manga/",
         "Achievement_Group": "Manga",
+        "color": "#D55E00",
     },
     "Anime": {
         "log_name": "Anime (in episodes watched)",
@@ -46,6 +48,7 @@ MEDIA_TYPES = {
         "unit_name": "episode",
         "source_url": "https://anilist.co/anime/",
         "Achievement_Group": "Anime",
+        "color": "#F0E442",
     },
     "Book": {
         "log_name": "Book (in pages read)",
@@ -58,6 +61,7 @@ MEDIA_TYPES = {
         "unit_name": "page",
         "source_url": None,
         "Achievement_Group": "Reading",
+        "color": "#E69F00",
     },
     "Reading Time": {
         "log_name": "Reading Time (in minutes)",
@@ -70,6 +74,7 @@ MEDIA_TYPES = {
         "unit_name": "minute",
         "source_url": None,
         "Achievement_Group": "Reading",
+        "color": "#009E73",
     },
     "Listening Time": {
         "log_name": "Listening Time (in minutes)",
@@ -82,6 +87,7 @@ MEDIA_TYPES = {
         "unit_name": "minute",
         "source_url": "https://www.themoviedb.org/{tmdb_media_type}/",
         "Achievement_Group": "Listening",
+        "color": "#0072B2",
     },
     "Reading": {
         "log_name": "Reading (in characters read)",
@@ -94,6 +100,7 @@ MEDIA_TYPES = {
         "unit_name": "character",
         "source_url": None,
         "Achievement_Group": "Reading",
+        "color": "#CC79A7",
     },
 }
 

@@ -4,7 +4,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
-from matplotlib import gridspec, patches
+from matplotlib import patches
 import matplotlib.colors as mcolors
 import discord
 from discord.ext import commands
@@ -82,9 +82,6 @@ def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, c
 
     time_frame = pd.date_range(bar_df.index.date.min(), to_date, freq='D')
     bar_df = bar_df.reindex(time_frame, fill_value=0)
-    stacking_order = color_dict.keys()
-    existing_columns = [col for col in stacking_order if col in bar_df.columns]
-    bar_df = bar_df[existing_columns]
 
     if not isinstance(bar_df.index, pd.DatetimeIndex):
         bar_df.index = pd.to_datetime(bar_df.index)
@@ -133,20 +130,11 @@ def generate_bar_chart(df: pd.DataFrame, from_date: datetime, to_date: datetime,
     # Apply consistent plot styles
     set_plot_styles()
 
-    color_dict = {
-        "Manga": "#b45865",
-        "Anime": "#e48586",
-        "Listening Time": "#ffb4c8",
-        "Book": "#e5afee",
-        "Reading Time": "#b9a7f3",
-        "Visual Novel": "#7d84e4",
-        "Reading": "#77aaee"
-    }
-    df_plot, x_lab, date_labels = process_bar_data(df, from_date, to_date, color_dict, immersion_type)
+    df_plot, x_lab, date_labels = process_bar_data(df, from_date, to_date, immersion_type)
 
     fig, ax = plt.subplots(figsize=(16, 12))
     fig.patch.set_facecolor('#2c2c2d')
-    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[color_dict.get(col, 'gray') for col in df_plot.columns])
+    df_plot.plot(kind='bar', stacked=True, ax=ax, color=[MEDIA_TYPES[col].get('color', 'gray') for col in df_plot.columns])
     ax.set_title('Points Over Time' if not immersion_type else f"{MEDIA_TYPES[immersion_type]['log_name']} Over Time")
     ax.set_ylabel('Points' if not immersion_type else MEDIA_TYPES[immersion_type]['unit_name'] + 's')
     ax.set_xlabel('Date' + x_lab)
@@ -192,7 +180,11 @@ def generate_heatmap(df: pd.DataFrame, from_date: datetime, to_date: datetime, i
         # ax.set_title(f"Heatmap - {year}")
         ax.set_title(f"{MEDIA_TYPES[immersion_type]['Achievement_Group']} Heatmap - {year}" if immersion_type else f"Immersion Heatmap - {year}")
         ax.axis("off")
-
+        # add a colorbar for the heatmap
+        cbar = fig.colorbar(ax.collections[0], ax=ax, orientation='horizontal', fraction=0.1, pad=0.02, aspect=50)
+        cbar.ax.yaxis.set_tick_params(color='white')
+        cbar.outline.set_edgecolor('#222222')
+        plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
         # Highlight the current day with a dark border
         if current_date.year == year:
             current_week = (current_date.timetuple().tm_yday + current_date.weekday() - 1) // 7
