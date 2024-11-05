@@ -4,7 +4,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colormaps
-from matplotlib import gridspec, patches
+from matplotlib import patches
 import matplotlib.colors as mcolors
 import discord
 from discord.ext import commands
