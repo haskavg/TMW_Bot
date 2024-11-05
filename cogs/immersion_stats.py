@@ -82,9 +82,6 @@ def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, c
 
     time_frame = pd.date_range(bar_df.index.date.min(), to_date, freq='D')
     bar_df = bar_df.reindex(time_frame, fill_value=0)
-    stacking_order = color_dict.keys()
-    existing_columns = [col for col in stacking_order if col in bar_df.columns]
-    bar_df = bar_df[existing_columns]
 
     if not isinstance(bar_df.index, pd.DatetimeIndex):
         bar_df.index = pd.to_datetime(bar_df.index)
@@ -133,7 +130,7 @@ def generate_bar_chart(df: pd.DataFrame, from_date: datetime, to_date: datetime,
     # Apply consistent plot styles
     set_plot_styles()
 
-    df_plot, x_lab, date_labels = process_bar_data(df, from_date, to_date, color_dict, immersion_type)
+    df_plot, x_lab, date_labels = process_bar_data(df, from_date, to_date, immersion_type)
 
     fig, ax = plt.subplots(figsize=(16, 12))
     fig.patch.set_facecolor('#2c2c2d')
