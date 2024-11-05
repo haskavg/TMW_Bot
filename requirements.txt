@@ -4,6 +4,8 @@ aiosqlite
 aiohttp
 pyyaml
 matplotlib
+numpy
+seaborn
 pandas
 humanize
 bar_chart_race
