@@ -192,7 +192,11 @@ def generate_heatmap(df: pd.DataFrame, from_date: datetime, to_date: datetime, i
         # ax.set_title(f"Heatmap - {year}")
         ax.set_title(f"{MEDIA_TYPES[immersion_type]['Achievement_Group']} Heatmap - {year}" if immersion_type else f"Immersion Heatmap - {year}")
         ax.axis("off")
-
+        # add a colorbar for the heatmap
+        cbar = fig.colorbar(ax.collections[0], ax=ax, orientation='horizontal', fraction=0.1, pad=0.02, aspect=50)
+        cbar.ax.yaxis.set_tick_params(color='white')
+        cbar.outline.set_edgecolor('#222222')
+        plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
         # Highlight the current day with a dark border
         if current_date.year == year:
             current_week = (current_date.timetuple().tm_yday + current_date.weekday() - 1) // 7
