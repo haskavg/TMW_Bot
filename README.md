@@ -102,6 +102,16 @@ Statistics:
 
 ---
 
+#### `immersion_bar_races.py`
+
+Creates a racing bar chart of immersion logs for a specified time perid which visualizes
+how much users logged over time and who is in the lead.
+
+Commands:
+* `/log_race` `<from_date>` `<to_date>` `<media_type>` `<race_type>` - Create a racing bar chart of immersion logs for a specified time period. 
+
+---
+
 #### `info.py`
 
 Provides informational commands that display predefined knowledge and documentation to users. Commands and their content are configured through a YAML file.

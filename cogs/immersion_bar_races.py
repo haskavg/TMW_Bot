@@ -26,6 +26,12 @@ GET_LOGS_FOR_RACE_QUERY = """
 """
 
 
+def admin_cooldown(interaction: discord.Interaction) -> Optional[discord.app_commands.Cooldown]:
+    if interaction.channel.permissions_for(interaction.user).administrator:
+        return None
+    return discord.app_commands.Cooldown(1, 300.0)
+
+
 class ImmersionBarRaces(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
@@ -78,12 +84,20 @@ class ImmersionBarRaces(commands.Cog):
 
         # Determine appropriate sampling frequency based on date range
         # This reduces the number of frames for longer time periods
-        if (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days > 90:
-            freq = 'W'  # Weekly for >90 days
+        if (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days > 210:
+            freq = '7D'
+        elif (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days > 150:
+            freq = '6D'
+        elif (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days > 120:
+            freq = '5D'
+        elif (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days > 90:
+            freq = '4D'
+        elif (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days > 60:
+            freq = '3D'
         elif (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days > 31:
-            freq = '2D'  # Every 2 days for >31 days
+            freq = '2D'
         else:
-            freq = 'D'  # Daily for 31 days
+            freq = 'D'
 
         # Resample data according to chosen frequency
         # max() keeps the highest value in each period
@@ -92,7 +106,9 @@ class ImmersionBarRaces(commands.Cog):
 
         # Generate chart title
         title = f"{'Points' if race_type == 'points' else 'Amount'} Race"
-        if media_type:
+        if media_type and race_type == 'points':
+            title += f" - {media_type}"
+        elif media_type and race_type == 'amount':
             title += f" - {MEDIA_TYPES[media_type]['log_name']}"
         title += f"\n{start_date.split()[0]} to {end_date.split()[0]}"
 
@@ -132,7 +148,7 @@ class ImmersionBarRaces(commands.Cog):
                                   race_type=[discord.app_commands.Choice(name='Points', value='points'),
                                              discord.app_commands.Choice(name='Amount', value='amount')])
     @discord.app_commands.guild_only()
-    @discord.app_commands.default_permissions(manage_messages=True)
+    @discord.app_commands.checks.dynamic_cooldown(admin_cooldown)
     async def log_race(self, interaction: discord.Interaction, from_date: str, to_date: str, media_type: Optional[str] = None, race_type: Optional[str] = 'points'):
         if not await is_valid_channel(interaction):
             return await interaction.response.send_message("You can only use this command in DM or in the log channels.", ephemeral=True)
@@ -146,8 +162,8 @@ class ImmersionBarRaces(commands.Cog):
         if end_date < start_date:
             return await interaction.response.send_message("End date must be after start date.", ephemeral=True)
 
-        if (end_date - start_date).days > 31:
-            return await interaction.response.send_message("Date range must be 31 days or less (subject to change...)", ephemeral=True)
+        if (end_date - start_date).days > 210:
+            return await interaction.response.send_message("Date range must be 210 days or less (subject to change...)", ephemeral=True)
 
         await interaction.response.defer()
 
@@ -182,8 +198,14 @@ class ImmersionBarRaces(commands.Cog):
 
         buffer = await asyncio.to_thread(self.generate_bar_race, logs_with_names, from_date, to_date, media_type, race_type)
 
+        message = f"Bar chart for {from_date} to {to_date}"
+        if media_type and race_type == 'points':
+            message += f" - {media_type}"
+        elif media_type and race_type == 'amount':
+            message += f" - {MEDIA_TYPES[media_type]['log_name']}"
+
         file = discord.File(buffer, filename="race.mp4")
-        await interaction.followup.send(f"Bar chart race for {from_date} to {to_date}" + (f" ({media_type})" if media_type else ""), file=file)
+        await interaction.followup.send(message, file=file)
 
 
 async def setup(bot):
