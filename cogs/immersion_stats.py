@@ -187,7 +187,7 @@ def generate_heatmap(df: pd.DataFrame, from_date: datetime, to_date: datetime, i
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
         # Highlight the current day with a dark border
         if current_date.year == year:
-            current_week = (current_date.timetuple().tm_yday + current_date.weekday() - 1) // 7
+            current_week = current_date.isocalendar().week - 1
             current_day = current_date.weekday()
             rect = patches.Rectangle(
                 (current_week, current_day),
