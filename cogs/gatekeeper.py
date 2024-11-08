@@ -332,6 +332,9 @@ class LevelUp(commands.Cog):
 
     @commands.Cog.listener(name="on_message")
     async def level_up_routine(self, message: discord.Message):
+        if not message.guild:
+            return
+
         if not message.author.id == KOTOBA_BOT_ID and not 'k!q' in message.content.lower():
             return
 
