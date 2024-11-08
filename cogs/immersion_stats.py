@@ -106,21 +106,21 @@ def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, c
     return df_plot, x_lab, date_labels
 
 
-def process_heatmap_data(df: pd.DataFrame, from_date: datetime, to_date: datetime) -> pd.DataFrame:
+def process_heatmap_data(df: pd.DataFrame, from_date: datetime, to_date: datetime) -> dict:
     df = df.resample("D").sum()
     full_date_range = pd.date_range(start=datetime(df.index.year.min(), 1, 1), end=datetime(df.index.year.max(), 12, 31))
     df = df.reindex(full_date_range, fill_value=0)
     df["day"] = df.index.weekday
     df["year"] = df.index.year
+
+    # Generate heatmap data for each year
     heatmap_data = {}
     for year, group in df.groupby("year"):
-        heat_array = np.full((7, 53), fill_value=np.nan)
         year_begins_on = group.index.date.min().weekday()
-        for date, row in group.iterrows():
-            week_num = (date.dayofyear + year_begins_on - 1) // 7
-            heat_array[row["day"], week_num] = row["points_received"]
-        year_df = pd.DataFrame(heat_array, columns=range(1, 54), index=range(7))
-        heatmap_data[year] = year_df
+        group["week"] = (group.index.dayofyear + year_begins_on - 1) // 7
+        year_data = group.pivot_table(index="day", columns="week", values="points_received", aggfunc="sum", fill_value=np.nan)
+
+        heatmap_data[year] = year_data
 
     return heatmap_data
 
@@ -187,7 +187,7 @@ def generate_heatmap(df: pd.DataFrame, from_date: datetime, to_date: datetime, i
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
         # Highlight the current day with a dark border
         if current_date.year == year:
-            current_week = (current_date.timetuple().tm_yday + current_date.weekday() - 1) // 7
+            current_week = current_date.isocalendar().week - 1
             current_day = current_date.weekday()
             rect = patches.Rectangle(
                 (current_week, current_day),
