@@ -91,7 +91,7 @@ class TMWBot(commands.Bot):
                                      f"Data: ```json\n{interaction.data}```",
                                      embed=error_embed)
         else:
-            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: {interaction.channel.name} | Guild: {interaction.guild.name}\n"
+            await self.debug_dm.send(f"Triggered by: `{interaction.command.name}` | Channel: {interaction.channel.name} | Guild: {interaction.guild.name} | User: {interaction.user.id} ({interaction.user.name})\n"
                                      f"Data: ```json\n{interaction.data}```",
                                      embed=error_embed)
 
