@@ -244,17 +244,17 @@ class LevelUp(commands.Cog):
             return False
         quiz_name, last_attempt_time = last_attempt
         last_attempt_time = datetime.fromisoformat(last_attempt_time)
-        if last_attempt_time + timedelta(days=7) > utcnow():
-            next_attempt_time = last_attempt_time + timedelta(days=7)
+        if last_attempt_time + timedelta(days=6) > utcnow():
+            next_attempt_time = last_attempt_time + timedelta(days=6)
             unix_timestamp = int(next_attempt_time.timestamp())
 
             await message.channel.send(
-                f"{message.author.mention} You can only attempt this quiz once every 7 days. Your next attempt will be available <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>).")
+                f"{message.author.mention} You can only attempt this quiz once every 6 days. Your next attempt will be available <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>).")
             return True
 
     async def register_quiz_attempt(self, message: discord.Message, quiz_name):
         await self.bot.RUN(ADD_QUIZ_ATTEMPT, (message.guild.id, message.author.id, quiz_name, utcnow()))
-        await message.channel.send(f"{message.author.mention} registering attempt for {quiz_name}. You can try again in 7 days.")
+        await message.channel.send(f"{message.author.mention} registering attempt for {quiz_name}. You can try again in 6 days.")
 
     async def get_corresponding_quiz_data(self, message: discord.Message, quiz_result: dict):
         rank_structure = gatekeeper_settings['rank_structure'][message.guild.id]
@@ -327,7 +327,7 @@ class LevelUp(commands.Cog):
 
         quiz_name, last_attempt_time = last_attempt
         last_attempt_time = datetime.fromisoformat(last_attempt_time)
-        next_attempt_time = last_attempt_time + timedelta(days=7)
+        next_attempt_time = last_attempt_time + timedelta(days=6)
         return int(next_attempt_time.timestamp())
 
     @commands.Cog.listener(name="on_message")
@@ -439,7 +439,7 @@ class LevelUp(commands.Cog):
     @discord.app_commands.guild_only()
     async def list_role_commands(self, interaction: discord.Interaction, guild_id: Optional[str]):
         if guild_id and not guild_id.isdigit():
-            await interaction.response.send("Invalid command input", ephemeral=True)
+            await interaction.response.send_message("Invalid command input", ephemeral=True)
         elif guild_id:
             guild_id = int(guild_id)
         else:
@@ -451,12 +451,19 @@ class LevelUp(commands.Cog):
 
         for rank in rank_structure:
             if rank['command']:
+                next_attempt_time = await self.get_next_attempt_time(guild_id, interaction.user.id, rank['name'])
+                if next_attempt_time and next_attempt_time < int(utcnow().timestamp()):
+                    next_attempt_time = None
                 if rank['rank_to_get']:
                     rank_to_get = await self.rank_to_get(guild_id, rank)
                     rank_command_embed.add_field(name=rank['name'], value=f"{rank['command']}\n" +
-                                                 f"Reward role: {rank_to_get}", inline=False)
+                                                 f"Reward role: {rank_to_get}" +
+                                                 (f"\nCooldown: <t:{next_attempt_time}:R> (on <t:{next_attempt_time}:F>)" if next_attempt_time else "\nCooldown: Not on cooldown."),
+                                                 inline=False)
                 else:
-                    rank_command_embed.add_field(name=rank['name'], value=rank['command'], inline=False)
+                    rank_command_embed.add_field(name=rank['name'], value=rank['command'] +
+                                                 (f"\nCooldown: <t:{next_attempt_time}:R> (on <t:{next_attempt_time}:F>)" if next_attempt_time else "\nCooldown: Not on cooldown."),
+                                                 inline=False)
 
         for rank in rank_structure:
             if rank['combination_rank']:
