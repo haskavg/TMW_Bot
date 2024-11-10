@@ -17,6 +17,7 @@ my_bot = TMWBot(command_prefix=COMMAND_PREFIX, cog_folder=COG_FOLDER, path_to_db
 
 
 async def main(cogs_to_load):
+    discord.utils.setup_logging()
     await my_bot.load_cogs(cogs_to_load)
     await my_bot.start(TOKEN)
 
