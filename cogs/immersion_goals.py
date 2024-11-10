@@ -102,12 +102,19 @@ async def check_goal_status(bot: TMWBot, user_id: int, media_type: str):
         else:
             unit_name = 'points'
 
+        # Calculate progress percentage and generate emoji progress bar
+        percentage = min(int((progress / goal_value) * 100), 100)
+        bar_filled = "🟩" * (percentage // 10)  # each green square represents 10%
+        bar_empty = "⬜" * (10 - (percentage // 10))
+        progress_bar = f"{bar_filled}{bar_empty} ({percentage}%)"
+
+        # Create status message based on goal progress
         if (created_at_dt <= current_time <= end_date_dt) and progress < goal_value:
-            goal_status = f"Goal is in progress: `{progress}`/`{goal_value}` {unit_name} for `{media_type}`. End time <t:{timestamp_end}:R>."
+            goal_status = f"Goal in progress: `{progress}`/`{goal_value}` {unit_name} for `{media_type}` - Ends <t:{timestamp_end}:R>. \n{progress_bar} "
         elif progress >= goal_value:
-            goal_status = f"Congratulations! You've achieved your goal of `{goal_value}` {unit_name} for `{media_type}` between <t:{timestamp_created}:D> and <t:{timestamp_end}:D>."
+            goal_status = f"🎉 Congratulations! You've achieved your goal of `{goal_value}` {unit_name} for `{media_type}` between <t:{timestamp_created}:D> and <t:{timestamp_end}:D>."
         else:
-            goal_status = f"You have failed to achieve your goal of `{goal_value}` {unit_name} for `{media_type}` by <t:{timestamp_end}:R>."
+            goal_status = f"⚠️ Goal failed: `{progress}`/`{goal_value}` {unit_name} for `{media_type}` by <t:{timestamp_end}:R>. \n{progress_bar}"
 
         goal_statuses.append(goal_status)
 
