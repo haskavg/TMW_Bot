@@ -232,10 +232,6 @@ class LevelUp(commands.Cog):
             await timeout_member(message.author, 2, "Invalid channel for quiz attempt.")
             return False
 
-        if is_valid_quiz and is_in_levelup_channel:
-            if await self.rank_has_cooldown(message.guild.id, performed_quiz_name):
-                await self.register_quiz_attempt(message, performed_quiz_name)
-
         return True
 
     async def is_on_cooldown(self, message: discord.Message, quiz_name):
@@ -252,9 +248,9 @@ class LevelUp(commands.Cog):
                 f"{message.author.mention} You can only attempt this quiz once every 6 days. Your next attempt will be available <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>).")
             return True
 
-    async def register_quiz_attempt(self, message: discord.Message, quiz_name):
-        await self.bot.RUN(ADD_QUIZ_ATTEMPT, (message.guild.id, message.author.id, quiz_name, utcnow()))
-        await message.channel.send(f"{message.author.mention} registering attempt for {quiz_name}. You can try again in 6 days.")
+    async def register_quiz_attempt(self, member: discord.Member, channel: discord.TextChannel, quiz_name):
+        await self.bot.RUN(ADD_QUIZ_ATTEMPT, (member.guild.id, member.id, quiz_name, utcnow()))
+        await channel.send(f"{member.mention} registered attempt for {quiz_name}. You can try again in 6 days.")
 
     async def get_corresponding_quiz_data(self, message: discord.Message, quiz_result: dict):
         rank_structure = gatekeeper_settings['rank_structure'][message.guild.id]
@@ -368,6 +364,9 @@ class LevelUp(commands.Cog):
             except discord.Forbidden:
                 pass
         else:
+            if await self.rank_has_cooldown(message.guild.id, quiz_data['name']):
+                await self.register_quiz_attempt(member, message.channel, quiz_data['name'])
+
             next_attempt = await self.get_next_attempt_time(message.guild.id, member.id, quiz_data['name'])
             if next_attempt:
                 try:
