@@ -161,7 +161,10 @@ class Bookmarks(commands.Cog):
             if not user:
                 user = await self.bot.fetch_user(payload.user_id)
 
-        dm_message = await self.send_bookmark_dm(user, message)
+        try:
+            dm_message = await self.send_bookmark_dm(user, message)
+        except discord.Forbidden:
+            return
 
         await self.bot.RUN(INSERT_USER_BOOKMARK_QUERY,
                            (payload.guild_id, payload.channel_id, payload.user_id, payload.message_id,
