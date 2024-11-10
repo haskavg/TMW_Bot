@@ -72,7 +72,7 @@ def set_plot_styles():
     })
 
 
-def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, color_dict: dict, immersion_type: str = None) -> tuple:
+def process_bar_data(df: pd.DataFrame, from_date: datetime, to_date: datetime, immersion_type: str = None) -> tuple:
     bar_df = df[from_date:to_date]
     if immersion_type:
         bar_df = bar_df.pivot_table(index=bar_df.index.date, columns='media_type', values='amount_logged', aggfunc='sum', fill_value=0)
