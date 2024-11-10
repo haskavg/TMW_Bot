@@ -52,12 +52,12 @@ class DailyQuestion(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
         self.api_key = os.getenv("OPENAI_KEY")
-        if not self.api_key:
-            return
-        self.check_daily_questions.start()
 
     async def cog_load(self):
         await self.bot.RUN(DAILY_QUESTIONS_CREATE_TABLE)
+        if not self.api_key:
+            return
+        self.check_daily_questions.start()
 
     def cog_unload(self):
         self.check_daily_questions.cancel()
