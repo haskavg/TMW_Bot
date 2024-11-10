@@ -110,11 +110,11 @@ async def check_goal_status(bot: TMWBot, user_id: int, media_type: str):
 
         # Create status message based on goal progress
         if (created_at_dt <= current_time <= end_date_dt) and progress < goal_value:
-            goal_status = f"Goal in progress: `{progress}`/`{goal_value}` {unit_name} for `{media_type}`. {progress_bar} - Ends <t:{timestamp_end}:R>."
+            goal_status = f"Goal in progress: `{progress}`/`{goal_value}` {unit_name} for `{media_type}` - Ends <t:{timestamp_end}:R>. \n{progress_bar} "
         elif progress >= goal_value:
             goal_status = f"🎉 Congratulations! You've achieved your goal of `{goal_value}` {unit_name} for `{media_type}` between <t:{timestamp_created}:D> and <t:{timestamp_end}:D>."
         else:
-            goal_status = f"⚠️ Goal failed: `{progress}`/`{goal_value}` {unit_name} for `{media_type}` by <t:{timestamp_end}:R>. {progress_bar}"
+            goal_status = f"⚠️ Goal failed: `{progress}`/`{goal_value}` {unit_name} for `{media_type}` by <t:{timestamp_end}:R>. \n{progress_bar}"
 
         goal_statuses.append(goal_status)
 
