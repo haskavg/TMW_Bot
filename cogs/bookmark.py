@@ -75,12 +75,8 @@ class Bookmarks(commands.Cog):
         return message
 
     async def send_bookmark_dm(self, user: discord.User, message: discord.Message) -> discord.Message:
-        embed = discord.Embed(
-            title=f"**Bookmark from {message.guild.name}**",
-            description=message.content,
-            timestamp=message.created_at,
-            color=discord.Color.blue()
-        )
+        embed = discord.Embed(title=f"**Bookmark from {message.guild.name}**", description=message.content,
+                              timestamp=message.created_at, color=discord.Color.blue())
         embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
 
         files_to_send = []
@@ -106,7 +102,10 @@ class Bookmarks(commands.Cog):
         if not user.dm_channel:
             await user.create_dm()
         dm_message = await user.dm_channel.send(embed=embed, files=files_to_send)
-        await dm_message.pin()
+        try:
+            await dm_message.pin()
+        except discord.HTTPException:
+            await user.dm_channel.send("Reached 50 pinned messages limit. Unpin messages to pin more.")
         await dm_message.add_reaction(self.remove_emoji)
         return dm_message
 
