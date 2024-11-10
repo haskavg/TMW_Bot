@@ -5,7 +5,7 @@ import yaml
 from lib.media_types import MEDIA_TYPES
 
 IMMERSION_LOG_SETTINGS = os.getenv("IMMERSION_LOG_SETTINGS") or "config/immersion_log_settings.yml"
-with open(IMMERSION_LOG_SETTINGS, "r") as f:
+with open(IMMERSION_LOG_SETTINGS, "r", encoding="utf-8") as f:
     immersion_log_settings = yaml.safe_load(f)
 
 

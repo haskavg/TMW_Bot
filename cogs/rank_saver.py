@@ -9,7 +9,7 @@ from discord.ext import commands, tasks
 from lib.bot import TMWBot
 
 RANKSAVER_SETTINGS_PATH = os.getenv("ALT_RANKSAVER_SETTINGS_PATH") or "config/rank_saver_settings.yml"
-with open(RANKSAVER_SETTINGS_PATH, "r") as f:
+with open(RANKSAVER_SETTINGS_PATH, "r", encoding="utf-8") as f:
     ranksaver_settings = yaml.safe_load(f)
 
 CREATE_USER_RANKS_TABLE = """

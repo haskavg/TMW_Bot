@@ -44,7 +44,7 @@ Provide only the question text in Japanese, nothing else."""
 
 
 DAILY_QUESTIONS_SETTINGS_PATH = os.getenv("DAILY_QUESTIONS_SETTINGS_PATH") or "config/daily_questions_settings.yml"
-with open(DAILY_QUESTIONS_SETTINGS_PATH, "r") as f:
+with open(DAILY_QUESTIONS_SETTINGS_PATH, "r", encoding="utf-8") as f:
     daily_questions_settings = yaml.safe_load(f)
 
 

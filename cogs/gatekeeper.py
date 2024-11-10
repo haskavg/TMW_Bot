@@ -14,7 +14,7 @@ from discord.utils import utcnow
 KOTOBA_BOT_ID = 251239170058616833
 
 GATEKEEPER_SETTINGS_PATH = os.getenv("ALT_GATEKEEPER_SETTINGS_PATH") or "config/gatekeeper_settings.yml"
-with open(GATEKEEPER_SETTINGS_PATH, "r") as f:
+with open(GATEKEEPER_SETTINGS_PATH, "r", encoding="utf-8") as f:
     gatekeeper_settings = yaml.safe_load(f)
 
 CREATE_QUIZ_ATTEMPTS_TABLE = """
@@ -423,7 +423,7 @@ class LevelUp(commands.Cog):
         else:
             member_string = [str(member) for member in role.members]
             member_string.append(f"\nTotal {member_count} members.")
-            with open("data/rank_user_count.txt", "w") as text_file:
+            with open("data/rank_user_count.txt", "w", encoding="utf-8") as text_file:
                 text_file.write("\n".join(member_string))
             await interaction.response.send_message("List of role members too large. Providing role member list in a file:", file=discord.File("data/rank_user_count.txt"))
             os.remove("data/rank_user_count.txt")

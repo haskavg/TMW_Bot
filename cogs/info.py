@@ -5,7 +5,7 @@ from discord.ext import commands
 from typing import Optional
 
 INFO_COMMANDS_PATH = "config/info_commands.yml"
-with open(INFO_COMMANDS_PATH, "r") as f:
+with open(INFO_COMMANDS_PATH, "r", encoding="utf-8") as f:
     info_commands = yaml.safe_load(f)
 
 

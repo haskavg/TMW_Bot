@@ -8,7 +8,7 @@ from discord.ext import commands
 from discord.ext import tasks
 
 THREAD_RESOLVER_SETTINGS_PATH = os.getenv("ALT_THREAD_RESOLVER_SETTINGS") or "config/thread_resolver_settings.yml"
-with open(THREAD_RESOLVER_SETTINGS_PATH, "r") as f:
+with open(THREAD_RESOLVER_SETTINGS_PATH, "r", encoding="utf-8") as f:
     thread_resolver_settings = yaml.safe_load(f)
 
 

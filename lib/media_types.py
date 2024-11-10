@@ -7,7 +7,7 @@ from lib.anilist_autocomplete import anime_manga_name_autocomplete, CACHED_ANILI
 from lib.tmdb_autocomplete import listening_autocomplete, CACHED_TMDB_THUMBNAIL_QUERY, CACHED_TMDB_TITLE_QUERY
 
 IMMERSION_LOG_SETTINGS = os.getenv("IMMERSION_LOG_SETTINGS") or "config/immersion_log_settings.yml"
-with open(IMMERSION_LOG_SETTINGS, "r") as f:
+with open(IMMERSION_LOG_SETTINGS, "r", encoding="utf-8") as f:
     immersion_log_settings = yaml.safe_load(f)
 
 MEDIA_TYPES = {

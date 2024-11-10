@@ -2,6 +2,7 @@
 cogs/testing_*
 .old
 .env
+.venv
 .vscode
 data
 .flake8

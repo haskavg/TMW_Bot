@@ -10,7 +10,7 @@ from discord.ext import tasks
 from datetime import datetime, timedelta, timezone
 
 SELFMUTE_SETTINGS_PATH = os.getenv("ALT_SELFMUTE_SETTINGS_PATH") or "config/selfmute_settings.yml"
-with open(SELFMUTE_SETTINGS_PATH, 'r') as settings_file:
+with open(SELFMUTE_SETTINGS_PATH, 'r', encoding="utf-8") as settings_file:
     selfmute_settings = yaml.safe_load(settings_file)
 
 CREATE_ACTIVE_MUTES_TABLE = """
