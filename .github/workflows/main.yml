@@ -37,6 +37,7 @@ jobs:
           --env AUTHORIZED_USERS=${{ vars.AUTHORIZED_USERS }} \
           --env DEBUG_USER=${{ vars.DEBUG_USER }} \
           --env TMDB_API_KEY=${{ secrets.TMDB_API_KEY }} \
+          --env OPENAI_KEY=${{ secrets.OPENAI_KEY }} \
           --restart unless-stopped \
           discord-tmw-bot
 
