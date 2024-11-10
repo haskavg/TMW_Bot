@@ -258,6 +258,8 @@ class LevelUp(commands.Cog):
 
     async def get_corresponding_quiz_data(self, message: discord.Message, quiz_result: dict):
         rank_structure = gatekeeper_settings['rank_structure'][message.guild.id]
+        if not quiz_result["decks"][0].get("shortName"):
+            return None
         deck_names = [deck['shortName'] for deck in quiz_result["decks"]]
         index_specified = bool(quiz_result["decks"][0].get("startIndex"))
         for rank in rank_structure:
