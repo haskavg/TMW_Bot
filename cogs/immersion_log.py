@@ -222,7 +222,7 @@ class ImmersionLog(commands.Cog):
         total_achievement_points_after = total_achievement_points_before + points_received
         achievement_reached, current_achievement, next_achievement = await get_achievement_reached_info(achievement_group, total_achievement_points_before, total_achievement_points_after)
 
-        if interaction.guild:
+        if interaction.guild and interaction.guild.emojis:
             random_guild_emoji = random.choice(interaction.guild.emojis)
         else:
             random_guild_emoji = ""
