@@ -15,7 +15,7 @@ rank_structure:
         - 300
       score_limit: 25
       max_missed: 10
-      command: "k!quiz jpdb1k(1-300) 25 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      command: "k!quiz jpdb1k(1-300) 25 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100"
       no_timeout: true
 
     - name: "Trainee"
@@ -31,7 +31,7 @@ rank_structure:
       deck_range: null
       score_limit: 50
       max_missed: 10
-      command: "k!quiz jpdb1k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      command: "k!quiz jpdb1k 50 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100"
       no_timeout: false
 
     - name: "Debut Idol"
@@ -48,7 +48,7 @@ rank_structure:
       deck_range: null
       score_limit: 50
       max_missed: 10
-      command: "k!quiz jpdb2_5k+jpdb5k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz jpdb2_5k+jpdb5k 50 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
     - name: "Major Idol"
@@ -65,7 +65,7 @@ rank_structure:
       deck_range: null
       score_limit: 50
       max_missed: 10
-      command: "k!quiz jpdb5k+jpdb10k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz jpdb5k+jpdb10k 50 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
     - name: "Prima Idol Vocab"
@@ -82,7 +82,7 @@ rank_structure:
       deck_range: null
       score_limit: 50
       max_missed: 10
-      command: "k!quiz jpdb10k+jpdb15k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz jpdb10k+jpdb15k 50 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
     - name: "Divine Idol Vocab"
@@ -99,7 +99,7 @@ rank_structure:
       deck_range: null
       score_limit: 50
       max_missed: 10
-      command: "k!quiz jpdb15k+jpdb20k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz jpdb15k+jpdb20k 50 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
     - name: "Eternal Idol Vocab"
@@ -116,7 +116,7 @@ rank_structure:
       deck_range: null
       score_limit: 50
       max_missed: 10
-      command: "k!quiz jpdb20k+jpdb25k 50 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz jpdb20k+jpdb25k 50 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
     - name: "GN2"
@@ -132,7 +132,7 @@ rank_structure:
       deck_range: null
       score_limit: 20
       max_missed: 4
-      command: "k!quiz gn2 nd 20 mmq=4"
+      command: "k!quiz gn2 nd 20 mmq=4 atl=16"
       no_timeout: false
 
     - name: "GN1"
@@ -148,7 +148,7 @@ rank_structure:
       deck_range: null
       score_limit: 20
       max_missed: 4
-      command: "k!quiz gn1 nd 20 mmq=4"
+      command: "k!quiz gn1 nd 20 mmq=4 atl=16"
       no_timeout: false
 
     - name: "Prima Idol"
@@ -191,7 +191,7 @@ rank_structure:
         - 100
       score_limit: 1
       max_missed: 10
-      command: "k!quiz n5(1-100) 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      command: "k!quiz n5(1-100) 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 atl=16"
       no_timeout: true
 
     - name: "Trainee"
@@ -207,7 +207,7 @@ rank_structure:
       deck_range: null
       score_limit: 1
       max_missed: 10
-      command: "k!quiz n5 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100"
+      command: "k!quiz n5 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 atl=16"
       no_timeout: false
 
     - name: "Debut Idol"
@@ -224,7 +224,7 @@ rank_structure:
       deck_range: null
       score_limit: 1
       max_missed: 10
-      command: "k!quiz n5+n4 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz n5+n4 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr atl=16"
       no_timeout: false
 
     - name: "Major Idol"
@@ -241,7 +241,7 @@ rank_structure:
       deck_range: null
       score_limit: 1
       max_missed: 10
-      command: "k!quiz n4+n3 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz n4+n3 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr atl=16"
       no_timeout: false
 
     - name: "Prima Idol Vocab"
@@ -258,7 +258,7 @@ rank_structure:
       deck_range: null
       score_limit: 1
       max_missed: 10
-      command: "k!quiz n3+n2 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz n3+n2 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr atl=16"
       no_timeout: false
 
     - name: "Divine Idol Vocab"
@@ -275,7 +275,7 @@ rank_structure:
       deck_range: null
       score_limit: 1
       max_missed: 10
-      command: "k!quiz n2+n1 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz n2+n1 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr atl=16"
       no_timeout: false
 
     - name: "Eternal Idol Vocab"
@@ -292,7 +292,7 @@ rank_structure:
       deck_range: null
       score_limit: 2
       max_missed: 10
-      command: "k!quiz n3+n1 2 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz n3+n1 2 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 effect=antiocr atl=16"
       no_timeout: false
 
     - name: "GN2"
@@ -308,7 +308,7 @@ rank_structure:
       deck_range: null
       score_limit: 1
       max_missed: 4
-      command: "k!quiz gn2 nd 1 mmq=4"
+      command: "k!quiz gn2 nd 1 mmq=4 atl=16"
       no_timeout: false
 
     - name: "GN1"
@@ -324,7 +324,7 @@ rank_structure:
       deck_range: null
       score_limit: 1
       max_missed: 4
-      command: "k!quiz gn1 nd 1 mmq=4"
+      command: "k!quiz gn1 nd 1 mmq=4 atl=16"
       no_timeout: false
 
     - name: "Prima Idol"
