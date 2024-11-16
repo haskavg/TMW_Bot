@@ -126,13 +126,13 @@ rank_structure:
       rank_to_get: null
       foreground: null
       effect: null
-      time_limit: 16000
+      time_limit: 30000
       decks:
         - "gn2"
       deck_range: null
       score_limit: 20
       max_missed: 4
-      command: "k!quiz gn2 nd 20 mmq=4 atl=16"
+      command: "k!quiz gn2 nd 20 mmq=4 atl=30"
       no_timeout: false
 
     - name: "GN1"
@@ -142,13 +142,13 @@ rank_structure:
       rank_to_get: null
       foreground: null
       effect: null
-      time_limit: 16000
+      time_limit: 30000
       decks:
         - "gn1"
       deck_range: null
       score_limit: 20
       max_missed: 4
-      command: "k!quiz gn1 nd 20 mmq=4 atl=16"
+      command: "k!quiz gn1 nd 20 mmq=4 atl=30"
       no_timeout: false
 
     - name: "Prima Idol"
@@ -302,13 +302,13 @@ rank_structure:
       rank_to_get: null
       foreground: null
       effect: null
-      time_limit: 16000
+      time_limit: 30000
       decks:
         - "gn2"
       deck_range: null
       score_limit: 1
       max_missed: 4
-      command: "k!quiz gn2 nd 1 mmq=4 atl=16"
+      command: "k!quiz gn2 nd 1 mmq=4 atl=30"
       no_timeout: false
 
     - name: "GN1"
@@ -318,13 +318,13 @@ rank_structure:
       rank_to_get: null
       foreground: null
       effect: null
-      time_limit: 16000
+      time_limit: 30000
       decks:
         - "gn1"
       deck_range: null
       score_limit: 1
       max_missed: 4
-      command: "k!quiz gn1 nd 1 mmq=4 atl=16"
+      command: "k!quiz gn1 nd 1 mmq=4 atl=30"
       no_timeout: false
 
     - name: "Prima Idol"
