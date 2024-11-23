@@ -131,7 +131,7 @@ async def verify_quiz_settings(quiz_data, quiz_result, member: discord.Member):
 
     failed_question_count = len(quiz_result["questions"]) - quiz_result["scores"][0]["score"]
     if failed_question_count >= fail_count:
-        return False, f"Failed too many question. Score: {quiz_result['scores'][0]['score']} out of {answer_count}."
+        return False, f"Failed too many questions. Score: {quiz_result['scores'][0]['score']} out of {answer_count}."
 
     if answer_count != quiz_result["scores"][0]["score"]:
         return False, f"Not enough questions answered. Score: {quiz_result['scores'][0]['score']} out of {answer_count}."
