@@ -130,11 +130,11 @@ async def verify_quiz_settings(quiz_data, quiz_result, member: discord.Member):
         return False, "Set font size does not match required font size."
 
     failed_question_count = len(quiz_result["questions"]) - quiz_result["scores"][0]["score"]
-    if failed_question_count > fail_count:
-        return False, "Failed too many questions."
+    if failed_question_count >= fail_count:
+        return False, f"Failed too many questions. Score: {quiz_result['scores'][0]['score']} out of {answer_count}."
 
     if answer_count != quiz_result["scores"][0]["score"]:
-        return False, f"Not enough questions answered. {quiz_result['scores'][0]['score']} answered, {answer_count} required."
+        return False, f"Not enough questions answered. Score: {quiz_result['scores'][0]['score']} out of {answer_count}."
 
     return (
         True,
