@@ -134,7 +134,7 @@ async def verify_quiz_settings(quiz_data, quiz_result, member: discord.Member):
         return False, "Failed too many questions."
 
     if answer_count != quiz_result["scores"][0]["score"]:
-        return False, "Not enough questions answered."
+        return False, f"Not enough questions answered. {quiz_result['scores'][0]['score']} answered, {answer_count} required."
 
     return (
         True,
