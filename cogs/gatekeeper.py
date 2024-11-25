@@ -356,6 +356,12 @@ class LevelUp(commands.Cog):
         if await self.already_owns_higher_or_same_role(quiz_data['rank_to_get'], member):
             return
 
+        if success and quiz_data['require_role']:
+            role_to_have = message.guild.get_role(quiz_data['require_role'])
+            if role_to_have not in member.roles:
+                await message.channel.send(f"{member.mention} You need the {role_to_have.mention} role to take this quiz.")
+                return
+
         if success:
             await self.reward_user(member, quiz_data)
             await self.send_in_announcement_channel(member, quiz_message)
@@ -455,19 +461,23 @@ class LevelUp(commands.Cog):
                 next_attempt_time = await self.get_next_attempt_time(guild_id, interaction.user.id, rank['name'])
                 if next_attempt_time and next_attempt_time < int(utcnow().timestamp()):
                     next_attempt_time = None
+
+                description = rank['command'] + "\n"
                 if rank['rank_to_get']:
                     rank_to_get = await self.rank_to_get(guild_id, rank)
-                    rank_command_embed.add_field(name=rank['name'], value=f"{rank['command']}\n" +
-                                                 f"Reward role: {rank_to_get}" +
-                                                 (f"\nCooldown: <t:{next_attempt_time}:R> (on <t:{next_attempt_time}:F>)" if next_attempt_time else "\nCooldown: Not on cooldown."),
-                                                 inline=False)
-                else:
-                    rank_command_embed.add_field(name=rank['name'], value=rank['command'] +
-                                                 (f"\nCooldown: <t:{next_attempt_time}:R> (on <t:{next_attempt_time}:F>)" if next_attempt_time else "\nCooldown: Not on cooldown."),
-                                                 inline=False)
+                    description += f"Reward role: {rank_to_get}\n"
 
-        for rank in rank_structure:
-            if rank['combination_rank']:
+                if next_attempt_time and not rank['combination_rank']:
+                    description += f"Cooldown: <t:{next_attempt_time}:R> (on <t:{next_attempt_time}:F>)"
+                else:
+                    description += "Cooldown: Not on cooldown."
+
+                if rank['require_role']:
+                    description += f"\nRequired role: {interaction.guild.get_role(rank['require_role']).mention}"
+
+                rank_command_embed.add_field(name=rank['name'], value=description, inline=False)
+
+            elif rank['combination_rank']:
                 rank_to_get = await self.rank_to_get(guild_id, rank)
                 rank_command_embed.add_field(name=rank['name'],
                                              value=f"Required quizzes: {', '.join(rank['quizzes_required'])}" +

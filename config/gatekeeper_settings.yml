@@ -1,6 +1,7 @@
 rank_structure:
   617136488840429598: # TMW
     - name: "Student"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -19,6 +20,7 @@ rank_structure:
       no_timeout: true
 
     - name: "Trainee"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -35,6 +37,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Debut Idol"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -52,6 +55,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Major Idol"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -69,6 +73,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Prima Idol Vocab"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -86,6 +91,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Divine Idol Vocab"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -103,6 +109,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Eternal Idol Vocab"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -120,6 +127,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN2"
+      require_role: null
       combination_rank: false
       font: null
       font_size: null
@@ -136,6 +144,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN1"
+      require_role: null
       combination_rank: false
       font: null
       font_size: null
@@ -152,6 +161,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Prima Idol"
+      require_role: null
       combination_rank: true
       decks: null
       quizzes_required: ["GN2", "Prima Idol Vocab"]
@@ -160,6 +170,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Divine Idol"
+      require_role: null
       combination_rank: true
       decks: null
       quizzes_required: ["GN1", "Divine Idol Vocab"]
@@ -168,6 +179,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Eternal Idol"
+      require_role: null
       combination_rank: true
       decks: null
       quizzes_required: ["GN1", "Eternal Idol Vocab"]
@@ -175,8 +187,28 @@ rank_structure:
       command: null
       no_timeout: false
 
+    - name: "Immortal Idol"
+      require_role: 1026918224266280960
+      combination_rank: false
+      font: "Eishiikaisho"
+      font_size: 100
+      rank_to_get: 1310487640608342056
+      foreground: "#f173ff"
+      effect: "antiocr"
+      time_limit: 16000
+      decks:
+        - "haard"
+        - "insane"
+        - "jpdb50k"
+      deck_range: null
+      score_limit: 50
+      max_missed: 9
+      command: "k!quiz haard+insane+jpdb50k 50 nd hardcore dauq=1 font=5 atl=16 mmq=9 color=#f173ff size=100 effect=antiocr"
+      no_timeout: false
+
   1297383002610995272: # Test_Guild
     - name: "Student"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -195,6 +227,7 @@ rank_structure:
       no_timeout: true
 
     - name: "Trainee"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -211,6 +244,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Debut Idol"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -228,6 +262,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Major Idol"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -245,6 +280,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Prima Idol Vocab"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -262,6 +298,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Divine Idol Vocab"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -279,6 +316,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Eternal Idol Vocab"
+      require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
@@ -296,6 +334,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN2"
+      require_role: null
       combination_rank: false
       font: null
       font_size: null
@@ -312,6 +351,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN1"
+      require_role: null
       combination_rank: false
       font: null
       font_size: null
@@ -328,6 +368,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Prima Idol"
+      require_role: null
       combination_rank: true
       decks: null
       quizzes_required: ["GN2", "Prima Idol Vocab"]
@@ -336,6 +377,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Divine Idol"
+      require_role: null
       combination_rank: true
       decks: null
       quizzes_required: ["GN1", "Divine Idol Vocab"]
@@ -344,11 +386,31 @@ rank_structure:
       no_timeout: false
 
     - name: "Eternal Idol"
+      require_role: null
       combination_rank: true
       decks: null
       quizzes_required: ["GN1", "Eternal Idol Vocab"]
       rank_to_get: 1297383002694746179
       command: null
+      no_timeout: false
+
+    - name: "Immortal Idol"
+      require_role: 1297383002694746179
+      combination_rank: false
+      font: "Eishiikaisho"
+      font_size: 100
+      rank_to_get: 1297383002694746180
+      foreground: "#f173ff"
+      effect: "antiocr"
+      time_limit: 16000
+      decks:
+        - "haard"
+        - "insane"
+        - "jpdb50k"
+      deck_range: null
+      score_limit: 1
+      max_missed: 9
+      command: "k!quiz haard+insane+jpdb50k 1 nd hardcore dauq=1 font=5 atl=16 mmq=9 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
 rank_settings:
