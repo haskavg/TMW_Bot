@@ -220,15 +220,14 @@ rank_structure:
         - "cope"
         - "kunyomi1kfull"
         - "loli"
-        - "myouji"
+        - "Myouji"
         - "jpdefs"
         - "places_full"
       deck_range: null
       score_limit: 50
       max_missed: 9
-      command: "k!quiz n0+cope+kunyomi1kfull+loli+myouji+jpdefs+places_full 50 nd hardcore dauq=1 font=7 atl=16 mmq=9 color=#f173ff size=90 effect=antiocr"
+      command: "k!quiz n0+cope+kunyomi1kfull+loli+Myouji+jpdefs+places_full 50 nd hardcore dauq=1 font=7 atl=16 mmq=9 color=#f173ff size=90 effect=antiocr"
       no_timeout: false
-
 
   1297383002610995272: # Test_Guild
     - name: "Student"
