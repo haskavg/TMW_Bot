@@ -211,8 +211,10 @@ class LevelUp(commands.Cog):
         is_in_levelup_channel = await self.is_in_levelup_channel(message)
         is_valid_quiz, performed_quiz_name = await self.is_valid_quiz(message, gatekeeper_settings['rank_structure'][message.guild.id])
 
+        rank_has_cooldown = await self.rank_has_cooldown(message.guild.id, performed_quiz_name)
+
         is_on_cooldown = await self.is_on_cooldown(message, performed_quiz_name)
-        if is_on_cooldown:
+        if is_on_cooldown and rank_has_cooldown:
             await timeout_member(message.author, 2, "Quiz on cooldown.")
             return False
 
