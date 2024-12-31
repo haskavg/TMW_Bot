@@ -225,8 +225,8 @@ rank_structure:
         - "places_full"
       deck_range: null
       score_limit: 50
-      max_missed: 1
-      command: "k!quiz n0+cope+kunyomi1kfull+loli+Myouji+jpdefs+places_full 50 nd hardcore dauq=1 font=7 atl=16 mmq=1 color=#f173ff size=90 effect=antiocr"
+      max_missed: 4
+      command: "k!quiz n0+cope+kunyomi1kfull+loli+Myouji+jpdefs+places_full 50 nd hardcore dauq=1 font=7 atl=16 mmq=4 color=#f173ff size=90 effect=antiocr"
       no_timeout: false
 
   1297383002610995272: # Test_Guild
