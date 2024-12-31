@@ -16,7 +16,7 @@ rank_structure:
         - 300
       score_limit: 25
       max_missed: 10
-      command: "k!quiz jpdb1k(1-300) 25 hardcore nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100"
+      command: "k!quiz jpdb1k(1-300) 25 nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100"
       no_timeout: true
 
     - name: "Trainee"
@@ -134,13 +134,13 @@ rank_structure:
       rank_to_get: null
       foreground: null
       effect: null
-      time_limit: 30000
+      time_limit: 60000
       decks:
         - "gn2"
       deck_range: null
       score_limit: 20
       max_missed: 4
-      command: "k!quiz gn2 nd 20 mmq=4 atl=30"
+      command: "k!quiz gn2 nd 20 mmq=4 atl=60"
       no_timeout: false
 
     - name: "GN1"
@@ -151,13 +151,13 @@ rank_structure:
       rank_to_get: null
       foreground: null
       effect: null
-      time_limit: 30000
+      time_limit: 60000
       decks:
         - "gn1"
       deck_range: null
       score_limit: 20
       max_missed: 4
-      command: "k!quiz gn1 nd 20 mmq=4 atl=30"
+      command: "k!quiz gn1 nd 20 mmq=4 atl=60"
       no_timeout: false
 
     - name: "Prima Idol"
@@ -198,12 +198,11 @@ rank_structure:
       time_limit: 16000
       decks:
         - "haado"
-        - "insane"
         - "jpdb50k"
       deck_range: null
       score_limit: 50
       max_missed: 9
-      command: "k!quiz haado+insane+jpdb50k 50 nd hardcore dauq=1 font=5 atl=16 mmq=9 color=#f173ff size=100 effect=antiocr"
+      command: "k!quiz haado+jpdb50k 50 nd hardcore dauq=1 font=5 atl=16 mmq=9 color=#f173ff size=100 effect=antiocr"
       no_timeout: false
 
     - name: "TMW Owner"
