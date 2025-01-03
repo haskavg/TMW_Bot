@@ -25,6 +25,11 @@ CREATE_GOAL_QUERY = """
     VALUES (?, ?, ?, ?, ?, ?);
 """
 
+CREATE_GOAL_QUERY_DEFAULT = """
+    INSERT INTO user_goals (user_id, media_type, goal_type, goal_value, end_date)
+    VALUES (?, ?, ?, ?, ?);
+"""
+
 GET_USER_GOALS_QUERY = """
     SELECT goal_id, media_type, goal_type, goal_value, end_date
     FROM user_goals
@@ -166,8 +171,11 @@ class GoalsCog(commands.Cog):
                 return await interaction.response.send_message("Invalid input. Please use a date in YYYY-MM-DD or YYYY-MM-DD HH:MM format.", ephemeral=True)
         else:
             start_date_dt = None
-
-        await self.bot.RUN(CREATE_GOAL_QUERY, (interaction.user.id, media_type, goal_type, goal_value, end_date_dt.strftime('%Y-%m-%d %H:%M:%S'), start_date_dt.strftime('%Y-%m-%d %H:%M:%S')))
+        
+        if start_date_dt == None:
+            await self.bot.RUN(CREATE_GOAL_QUERY_DEFAULT, (interaction.user.id, media_type, goal_type, goal_value, end_date_dt.strftime('%Y-%m-%d %H:%M:%S')))
+        else:
+            await self.bot.RUN(CREATE_GOAL_QUERY, (interaction.user.id, media_type, goal_type, goal_value, end_date_dt.strftime('%Y-%m-%d %H:%M:%S'), start_date_dt.strftime('%Y-%m-%d %H:%M:%S')))
 
         unit_name = MEDIA_TYPES[media_type]['unit_name'] if goal_type == 'amount' else 'points'
         timestamp = int(end_date_dt.timestamp())
