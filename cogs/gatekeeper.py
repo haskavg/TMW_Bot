@@ -363,7 +363,7 @@ class LevelUp(commands.Cog):
         if success and quiz_data['require_role']:
             role_to_have = message.guild.get_role(quiz_data['require_role'])
             if role_to_have not in member.roles:
-                await message.channel.send(f"{member.mention} You need the {role_to_have.mention} role to take this quiz.")
+                await message.channel.send(f"{member.mention} You need the {role_to_have.name} role to take this quiz.")
                 return
 
         if success:
