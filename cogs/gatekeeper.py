@@ -6,7 +6,7 @@ import asyncio
 import yaml
 import os
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from discord.ext import commands
 from discord.utils import utcnow
 
@@ -170,19 +170,29 @@ async def timeout_member(member: discord.Member, duration_in_minutes: int, reaso
     except discord.Forbidden:
         pass
 
+def get_next_sunday_midnight_from(dt):
+    days_until_sunday = (6 - dt.weekday()) % 7
+    if days_until_sunday == 0:
+        days_until_sunday = 7  
+    next_sunday = dt + timedelta(days=days_until_sunday)
+    next_sunday_midnight = datetime(next_sunday.year, next_sunday.month, next_sunday.day, 0, 0, 0, tzinfo=timezone.utc)
+    return next_sunday_midnight
 
 class LevelUp(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
+        self.user_threads = {}
 
     async def cog_load(self):
         await self.bot.RUN(CREATE_QUIZ_ATTEMPTS_TABLE)
         await self.bot.RUN(CREATE_PASSED_QUIZZES_TABLE)
 
     async def is_in_levelup_channel(self, message: discord.Message):
-        channel_ids = gatekeeper_settings['rank_settings'][message.guild.id]['valid_levelup_channels']
-        channels = [message.guild.get_channel(channel_id) for channel_id in channel_ids]
-        return message.channel in channels
+        if message.author.id in self.user_threads:
+            thread_id = self.user_threads[message.author.id]
+            if message.channel.id == thread_id:
+                return True
+        return False
 
     async def is_restricted_quiz(self, message: discord.Message):
         restricted_quizzes = gatekeeper_settings['rank_settings'][message.guild.id]['restricted_quiz_names']
@@ -244,17 +254,19 @@ class LevelUp(commands.Cog):
             return False
         quiz_name, last_attempt_time = last_attempt
         last_attempt_time = datetime.fromisoformat(last_attempt_time)
-        if last_attempt_time + timedelta(days=6) > utcnow():
-            next_attempt_time = last_attempt_time + timedelta(days=6)
-            unix_timestamp = int(next_attempt_time.timestamp())
-
+        next_sunday_midnight = get_next_sunday_midnight_from(last_attempt_time)
+        if utcnow() < next_sunday_midnight:
+            unix_timestamp = int(next_sunday_midnight.timestamp())
             await message.channel.send(
-                f"{message.author.mention} You can only attempt this quiz once every 6 days. Your next attempt will be available <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>).")
+                f"{message.author.mention} You can only attempt this quiz once per week. Your next attempt will be available <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>).")
             return True
+        return False
 
     async def register_quiz_attempt(self, member: discord.Member, channel: discord.TextChannel, quiz_name):
         await self.bot.RUN(ADD_QUIZ_ATTEMPT, (member.guild.id, member.id, quiz_name, utcnow()))
-        await channel.send(f"{member.mention} registered attempt for {quiz_name}. You can try again in 6 days.")
+        next_sunday_midnight = get_next_sunday_midnight_from(utcnow())
+        unix_timestamp = int(next_sunday_midnight.timestamp())
+        await channel.send(f"{member.mention} registered attempt for {quiz_name}. You can try again <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>).")
 
     async def get_corresponding_quiz_data(self, message: discord.Message, quiz_result: dict):
         rank_structure = gatekeeper_settings['rank_structure'][message.guild.id]
@@ -276,7 +288,7 @@ class LevelUp(commands.Cog):
     async def reward_user(self, member: discord.Member, quiz_data: dict):
         await self.bot.RUN(ADD_PASSED_QUIZ, (member.guild.id, member.id, quiz_data['name']))
         if quiz_data['rank_to_get']:
-            roles = await self.get_all_quiz_roles(member.guild)
+            roles = [role for role in await self.get_all_quiz_roles(member.guild) if role is not None]
             role_to_get = member.guild.get_role(quiz_data['rank_to_get'])
             await member.remove_roles(*roles)
             await member.add_roles(role_to_get)
@@ -309,8 +321,12 @@ class LevelUp(commands.Cog):
         if not role_to_get:
             return False
 
-        all_rank_roles = sorted(await self.get_all_quiz_roles(member.guild), key=lambda r: r.position, reverse=True)
-
+        all_rank_roles = sorted(
+            [role for role in await self.get_all_quiz_roles(member.guild) if role is not None],
+            key=lambda r: r.position,
+            reverse=True
+        )
+        
         for role in member.roles:
             if role in all_rank_roles and role.position >= role_to_get.position:
                 return True
@@ -380,7 +396,8 @@ class LevelUp(commands.Cog):
             if await self.rank_has_cooldown(message.guild.id, quiz_data['name']):
                 await self.register_quiz_attempt(member, message.channel, quiz_data['name'])
 
-            next_attempt = await self.get_next_attempt_time(message.guild.id, member.id, quiz_data['name'])
+            next_sunday_midnight = get_next_sunday_midnight_from(utcnow())
+            next_attempt = int(next_sunday_midnight.timestamp())
             if next_attempt:
                 try:
                     await member.send(
@@ -492,6 +509,80 @@ class LevelUp(commands.Cog):
 
         await interaction.response.send_message(embed=rank_command_embed, ephemeral=True)
 
+    async def quiz_autocomplete_create(self, interaction: discord.Interaction, current_input: str):
+        guild_id = interaction.guild.id
+        rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure'][guild_id]]
+        possible_choices = [discord.app_commands.Choice(name=rank_name, value=rank_name) for rank_name in rank_names if current_input.lower() in rank_name.lower()]
+        return possible_choices[:25]
+    
+    async def is_in_levelup_channel_create(self, message: discord.Message):
+        channel_ids = gatekeeper_settings['rank_settings'][message.guild.id]['valid_levelup_channels']
+        channels = [message.guild.get_channel(channel_id) for channel_id in channel_ids]
+        return message.channel in channels
+    
+    async def is_on_cooldown_create(self, user: discord.User, quiz_name: str, rank_has_cooldown: bool):
+        if not rank_has_cooldown:
+            return False, None
+        last_attempt = await self.bot.GET_ONE(GET_LAST_QUIZ_ATTEMPT, (user.guild.id, user.id, quiz_name))
+        if not last_attempt:
+            return False, None
+        quiz_name, last_attempt_time = last_attempt
+        last_attempt_time = datetime.fromisoformat(last_attempt_time)
+        next_sunday_midnight = get_next_sunday_midnight_from(last_attempt_time)
+        if utcnow() < next_sunday_midnight:
+            unix_timestamp = int(next_sunday_midnight.timestamp())
+            cooldown_message = (
+                f"You can only attempt this quiz once per week. Your next attempt will be available <t:{unix_timestamp}:R> (on <t:{unix_timestamp}:F>)."
+            )
+            return True, cooldown_message
+        return False, None
+    
+    @discord.app_commands.command(name="role_quiz", description="Start a quiz for a specific rank")
+    @discord.app_commands.describe(rank="The rank for the quiz")
+    @discord.app_commands.autocomplete(rank=quiz_autocomplete_create)
+    async def role_quiz(self, interaction: discord.Interaction, rank: str):
+        guild_id = interaction.guild.id
+        rank_structure = gatekeeper_settings['rank_structure'][guild_id]
+        quiz_command = None
+
+        for quiz in rank_structure:
+            if quiz['name'].lower() == rank.lower():
+                quiz_command = quiz['command']
+                break
+
+        if not quiz_command:
+            await interaction.response.send_message("Invalid rank specified.", ephemeral=True)
+            return
+
+        if not await self.is_in_levelup_channel_create(interaction):
+            await interaction.response.send_message("This command can only be used in the designated level-up channels.", ephemeral=True)
+            return
+
+        rank_has_cooldown = await self.rank_has_cooldown(guild_id, rank)
+        is_on_cooldown, cooldown_message = await self.is_on_cooldown_create(interaction.user, rank, rank_has_cooldown)
+        if is_on_cooldown:
+            await interaction.response.send_message(cooldown_message, ephemeral=True)
+            return
+
+        await interaction.response.send_message(f"Quiz thread created for {rank}.", ephemeral=True)
+
+        thread = await interaction.channel.create_thread(
+            name=f"{rank} Quiz - {interaction.user.name}",
+            auto_archive_duration=60,
+            reason='Quiz thread'
+        )
+
+        self.user_threads[interaction.user.id] = thread.id
+
+        kotoba_bot_user = await interaction.guild.fetch_member(KOTOBA_BOT_ID)
+        await thread.add_user(kotoba_bot_user)
+        await thread.add_user(interaction.user) 
+
+        await thread.send(f"To begin the {rank} quiz, copy and paste the following command")
+        await thread.send(quiz_command)
+
+        await asyncio.sleep(86400)
+        await thread.delete()
 
 async def setup(bot):
     await bot.add_cog(LevelUp(bot))
