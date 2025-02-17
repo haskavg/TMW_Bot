@@ -409,15 +409,15 @@ class LevelUp(commands.Cog):
             if await self.rank_has_cooldown(message.guild.id, quiz_data['name']):
                 await self.register_quiz_attempt(member, message.channel, quiz_data['name'])
 
-            next_sunday_midnight = get_next_sunday_midnight_from(utcnow())
-            next_attempt = int(next_sunday_midnight.timestamp())
-            if next_attempt:
-                try:
-                    await member.send(
-                        f"Your attempt at the {quiz_data['name']} quiz was unsuccessful: {quiz_message}\n"
-                        f"You can try again <t:{next_attempt}:R> (on <t:{next_attempt}:F>).")
-                except discord.Forbidden:
-                    pass
+                next_sunday_midnight = get_next_sunday_midnight_from(utcnow())
+                next_attempt = int(next_sunday_midnight.timestamp())
+                if next_attempt:
+                    try:
+                        await member.send(
+                            f"Your attempt at the {quiz_data['name']} quiz was unsuccessful: {quiz_message}\n"
+                            f"You can try again <t:{next_attempt}:R> (on <t:{next_attempt}:F>).")
+                    except discord.Forbidden:
+                        pass
 
     @discord.app_commands.command(name="reset_user_cooldown",  description="Reset a users quiz cooldown.")
     @discord.app_commands.guild_only()
