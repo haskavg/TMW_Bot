@@ -521,7 +521,7 @@ class LevelUp(commands.Cog):
 
     async def quiz_autocomplete_create(self, interaction: discord.Interaction, current_input: str):
         guild_id = interaction.guild.id
-        rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure'][guild_id]]
+        rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure'][guild_id] if quiz['command']]
         possible_choices = [discord.app_commands.Choice(name=rank_name, value=rank_name) for rank_name in rank_names if current_input.lower() in rank_name.lower()]
         return possible_choices[:25]
     
