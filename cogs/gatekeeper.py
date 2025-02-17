@@ -32,6 +32,13 @@ CREATE_PASSED_QUIZZES_TABLE = """
     quiz_name TEXT NOT NULL,
     PRIMARY KEY (guild_id, user_id, quiz_name));"""
 
+CREATE_USER_THREADS_TABLE = """
+    CREATE TABLE IF NOT EXISTS user_threads (
+    user_id INTEGER NOT NULL,
+    thread_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id)
+);"""
+
 ADD_QUIZ_ATTEMPT = """INSERT INTO quiz_attempts (guild_id, user_id, quiz_name, created_at) VALUES (?,?,?,?);"""
 
 GET_LAST_QUIZ_ATTEMPT = """SELECT quiz_name, created_at FROM quiz_attempts
@@ -46,6 +53,10 @@ ADD_PASSED_QUIZ = """INSERT INTO passed_quizzes (guild_id, user_id, quiz_name) V
 
 GET_PASSED_QUIZZES = """SELECT quiz_name FROM passed_quizzes WHERE guild_id = ? AND user_id = ?;"""
 
+ADD_USER_THREAD = """INSERT INTO user_threads (user_id, thread_id) VALUES (?, ?)
+                     ON CONFLICT(user_id) DO UPDATE SET thread_id = excluded.thread_id;"""
+
+GET_USER_THREAD = """SELECT thread_id FROM user_threads WHERE user_id = ?;"""
 
 async def quiz_autocomplete(interaction: discord.Interaction, current_input: str):
     rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure']
@@ -181,17 +192,16 @@ def get_next_sunday_midnight_from(dt):
 class LevelUp(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
-        self.user_threads = {}
 
     async def cog_load(self):
         await self.bot.RUN(CREATE_QUIZ_ATTEMPTS_TABLE)
         await self.bot.RUN(CREATE_PASSED_QUIZZES_TABLE)
+        await self.bot.RUN(CREATE_USER_THREADS_TABLE)
 
     async def is_in_levelup_channel(self, message: discord.Message):
-        if message.author.id in self.user_threads:
-            thread_id = self.user_threads[message.author.id]
-            if message.channel.id == thread_id:
-                return True
+        thread_id = await self.bot.GET_ONE(GET_USER_THREAD, (message.author.id,))
+        if thread_id and message.channel.id == thread_id[0]:
+            return True
         return False
 
     async def is_restricted_quiz(self, message: discord.Message):
@@ -572,7 +582,7 @@ class LevelUp(commands.Cog):
             reason='Quiz thread'
         )
 
-        self.user_threads[interaction.user.id] = thread.id
+        await self.bot.RUN(ADD_USER_THREAD, (interaction.user.id, thread.id))
 
         kotoba_bot_user = await interaction.guild.fetch_member(KOTOBA_BOT_ID)
         await thread.add_user(kotoba_bot_user)
