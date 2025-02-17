@@ -58,6 +58,7 @@ ADD_USER_THREAD = """INSERT INTO user_threads (user_id, thread_id) VALUES (?, ?)
 
 GET_USER_THREAD = """SELECT thread_id FROM user_threads WHERE user_id = ?;"""
 
+
 async def quiz_autocomplete(interaction: discord.Interaction, current_input: str):
     rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure']
                   [interaction.guild.id] if quiz["combination_rank"] is False and quiz["no_timeout"] is False]
@@ -181,13 +182,15 @@ async def timeout_member(member: discord.Member, duration_in_minutes: int, reaso
     except discord.Forbidden:
         pass
 
+
 def get_next_sunday_midnight_from(dt):
     days_until_sunday = (6 - dt.weekday()) % 7
     if days_until_sunday == 0:
-        days_until_sunday = 7  
+        days_until_sunday = 7
     next_sunday = dt + timedelta(days=days_until_sunday)
     next_sunday_midnight = datetime(next_sunday.year, next_sunday.month, next_sunday.day, 0, 0, 0, tzinfo=timezone.utc)
     return next_sunday_midnight
+
 
 class LevelUp(commands.Cog):
     def __init__(self, bot: TMWBot):
@@ -336,7 +339,7 @@ class LevelUp(commands.Cog):
             key=lambda r: r.position,
             reverse=True
         )
-        
+
         for role in member.roles:
             if role in all_rank_roles and role.position >= role_to_get.position:
                 return True
@@ -524,16 +527,16 @@ class LevelUp(commands.Cog):
         rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure'][guild_id] if quiz['command']]
         possible_choices = [discord.app_commands.Choice(name=rank_name, value=rank_name) for rank_name in rank_names if current_input.lower() in rank_name.lower()]
         return possible_choices[:25]
-    
+
     async def is_in_levelup_channel_create(self, message: discord.Message):
         channel_ids = gatekeeper_settings['rank_settings'][message.guild.id]['valid_levelup_channels']
         channels = [message.guild.get_channel(channel_id) for channel_id in channel_ids]
         return message.channel in channels
-    
-    async def is_on_cooldown_create(self, user: discord.User, quiz_name: str, rank_has_cooldown: bool):
+
+    async def is_on_cooldown_create(self, member: discord.Member, quiz_name: str, rank_has_cooldown: bool):
         if not rank_has_cooldown:
             return False, None
-        last_attempt = await self.bot.GET_ONE(GET_LAST_QUIZ_ATTEMPT, (user.guild.id, user.id, quiz_name))
+        last_attempt = await self.bot.GET_ONE(GET_LAST_QUIZ_ATTEMPT, (member.guild.id, member.id, quiz_name))
         if not last_attempt:
             return False, None
         quiz_name, last_attempt_time = last_attempt
@@ -546,7 +549,7 @@ class LevelUp(commands.Cog):
             )
             return True, cooldown_message
         return False, None
-    
+
     @discord.app_commands.command(name="role_quiz", description="Start a quiz for a specific rank")
     @discord.app_commands.describe(rank="The rank for the quiz")
     @discord.app_commands.autocomplete(rank=quiz_autocomplete_create)
@@ -577,22 +580,23 @@ class LevelUp(commands.Cog):
         await interaction.response.send_message(f"Quiz thread created for {rank}.", ephemeral=True)
 
         thread = await interaction.channel.create_thread(
-            name=f"{rank} Quiz - {interaction.user.name}",
+            name=f"{rank} Quiz - {interaction.user.name}"[:100],
             auto_archive_duration=60,
-            reason='Quiz thread'
+            reason='Quiz Thread'
         )
 
         await self.bot.RUN(ADD_USER_THREAD, (interaction.user.id, thread.id))
 
         kotoba_bot_user = await interaction.guild.fetch_member(KOTOBA_BOT_ID)
         await thread.add_user(kotoba_bot_user)
-        await thread.add_user(interaction.user) 
+        await thread.add_user(interaction.user)
 
-        await thread.send(f"To begin the {rank} quiz, copy and paste the following command")
+        await thread.send(f"To begin the {rank} quiz, copy and paste the following command:")
         await thread.send(quiz_command)
 
         await asyncio.sleep(86400)
         await thread.delete()
+
 
 async def setup(bot):
     await bot.add_cog(LevelUp(bot))
