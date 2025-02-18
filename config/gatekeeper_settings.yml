@@ -1,6 +1,7 @@
 rank_structure:
   617136488840429598: # TMW
     - name: "Student"
+      emoji: <:student:1341420183729733708>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -20,6 +21,7 @@ rank_structure:
       no_timeout: true
 
     - name: "Trainee"
+      emoji: <:trainee:1341420227669393439>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -37,6 +39,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Debut Idol"
+      emoji: <:debut:1341420262830112828>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -55,6 +58,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Major Idol"
+      emoji: <:major:1341420293243015278>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -73,6 +77,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Prima Idol Vocab"
+      emoji: <:prima:1341420318287204435>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -91,6 +96,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Divine Idol Vocab"
+      emoji: <:divine:1341420356514091039>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -109,6 +115,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Eternal Idol Vocab"
+      emoji: <:eternal:1341420381034254460>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -127,6 +134,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN2"
+      emoji: <:prima:1341420318287204435>
       require_role: null
       combination_rank: false
       font: null
@@ -144,6 +152,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN1"
+      emoji: <:divine:1341420356514091039>
       require_role: null
       combination_rank: false
       font: null
@@ -188,6 +197,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Immortal Idol"
+      emoji: <:immortal:1341420416652017756>
       require_role: 1026918224266280960
       combination_rank: false
       font: "Eishiikaisho"
@@ -206,6 +216,7 @@ rank_structure:
       no_timeout: false
 
     - name: "TMW Owner"
+      emoji: <:owner:1341420440442114130>
       require_role: null
       combination_rank: false
       font: "Aoyagi Kouzan Gyousho"

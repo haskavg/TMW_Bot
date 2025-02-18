@@ -191,7 +191,78 @@ def get_next_sunday_midnight_from(dt):
     next_sunday_midnight = datetime(next_sunday.year, next_sunday.month, next_sunday.day, 0, 0, 0, tzinfo=timezone.utc)
     return next_sunday_midnight
 
+class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]], template=r"quizmenu-guild:(?P<guild_id>\d+)"):
+    def __init__(self, levelup: "LevelUp", guild_id: int):
+        self.levelup = levelup
+        self.guild_id = guild_id 
+        rank_names = [
+                (quiz["name"], quiz["emoji"])
+                for quiz in gatekeeper_settings["rank_structure"][guild_id]
+                if quiz["command"]
+        ]
+        super().__init__(
+            discord.ui.Select(
+                custom_id=f"quizmenu-guild:{guild_id}",
+                options = [
+                    discord.SelectOption(
+                        label=name,
+                        emoji=emoji if emoji else None,
+                        description=f"Select to take the {name} quiz!",
+                    )
+                    for name, emoji in rank_names
+                ],
+                placeholder="Click here to take a quiz!",
+                min_values=1,
+                max_values=1,
+            )       
+        )
+    @classmethod
+    async def from_custom_id(cls, interaction: discord.Interaction, item, match: re.Match[str]) -> discord.ui.DynamicItem:
+        guild_id = int(match.group("guild_id"))
+        levelup = interaction.client.get_cog("LevelUp") 
+        if not levelup:
+            raise RuntimeError("LevelUp cog is not loaded.")
+        return cls(levelup, guild_id) 
 
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer()
+        assert interaction.data is not None and "custom_id" in interaction.data, "Invalid interaction data"
+        rank = self.item.values[0]
+        guild_id = interaction.guild.id
+        rank_structure = gatekeeper_settings['rank_structure'][guild_id]
+        quiz_command = None
+
+        for quiz in rank_structure:
+            if quiz['name'].lower() == rank.lower():
+                quiz_command = quiz['command']
+                break
+
+        rank_has_cooldown = await self.levelup.rank_has_cooldown(interaction.guild.id, rank)
+        is_on_cooldown, cooldown_message = await self.levelup.is_on_cooldown_create(interaction.user, rank, rank_has_cooldown)
+        if is_on_cooldown:
+            await interaction.followup.send(cooldown_message, ephemeral=True)
+            return
+
+        await interaction.followup.send(f"Creating your quiz thread for {rank}. Good luck!", ephemeral=True)
+
+        thread = await interaction.channel.create_thread(
+            name=f"{rank} Quiz - {interaction.user.name}"[:100],
+            auto_archive_duration=60,
+            reason='Quiz Thread'
+        )
+
+        await self.levelup.bot.RUN(ADD_USER_THREAD, (interaction.user.id, thread.id))
+
+        kotoba_bot_user = await interaction.guild.fetch_member(KOTOBA_BOT_ID)
+        await thread.add_user(kotoba_bot_user)
+        await thread.add_user(interaction.user)
+
+        await thread.send(f"To begin the {rank} quiz, copy and paste the following command exactly:")
+        await thread.send(f"```{quiz_command}```")
+
+        await asyncio.sleep(86400)
+        await thread.delete()
+            
 class LevelUp(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
@@ -201,6 +272,8 @@ class LevelUp(commands.Cog):
         await self.bot.RUN(CREATE_PASSED_QUIZZES_TABLE)
         await self.bot.RUN(CREATE_USER_THREADS_TABLE)
 
+        self.bot.add_dynamic_items(DynamicQuizMenu)
+   
     async def is_in_levelup_channel(self, message: discord.Message):
         thread_id = await self.bot.GET_ONE(GET_USER_THREAD, (message.author.id,))
         if thread_id and message.channel.id == thread_id[0]:
@@ -528,11 +601,6 @@ class LevelUp(commands.Cog):
         possible_choices = [discord.app_commands.Choice(name=rank_name, value=rank_name) for rank_name in rank_names if current_input.lower() in rank_name.lower()]
         return possible_choices[:25]
 
-    async def is_in_levelup_channel_create(self, message: discord.Message):
-        channel_ids = gatekeeper_settings['rank_settings'][message.guild.id]['valid_levelup_channels']
-        channels = [message.guild.get_channel(channel_id) for channel_id in channel_ids]
-        return message.channel in channels
-
     async def is_on_cooldown_create(self, member: discord.Member, quiz_name: str, rank_has_cooldown: bool):
         if not rank_has_cooldown:
             return False, None
@@ -550,53 +618,21 @@ class LevelUp(commands.Cog):
             return True, cooldown_message
         return False, None
 
-    @discord.app_commands.command(name="role_quiz", description="Start a quiz for a specific rank")
-    @discord.app_commands.describe(rank="The rank for the quiz")
-    @discord.app_commands.autocomplete(rank=quiz_autocomplete_create)
-    async def role_quiz(self, interaction: discord.Interaction, rank: str):
-        guild_id = interaction.guild.id
-        rank_structure = gatekeeper_settings['rank_structure'][guild_id]
-        quiz_command = None
-
-        for quiz in rank_structure:
-            if quiz['name'].lower() == rank.lower():
-                quiz_command = quiz['command']
-                break
-
-        if not quiz_command:
-            await interaction.response.send_message("Invalid rank specified.", ephemeral=True)
-            return
-
-        if not await self.is_in_levelup_channel_create(interaction):
-            await interaction.response.send_message("This command can only be used in the designated level-up channels.", ephemeral=True)
-            return
-
-        rank_has_cooldown = await self.rank_has_cooldown(guild_id, rank)
-        is_on_cooldown, cooldown_message = await self.is_on_cooldown_create(interaction.user, rank, rank_has_cooldown)
-        if is_on_cooldown:
-            await interaction.response.send_message(cooldown_message, ephemeral=True)
-            return
-
-        await interaction.response.send_message(f"Quiz thread created for {rank}.", ephemeral=True)
-
-        thread = await interaction.channel.create_thread(
-            name=f"{rank} Quiz - {interaction.user.name}"[:100],
-            auto_archive_duration=60,
-            reason='Quiz Thread'
+    @discord.app_commands.command(
+        name="create_quiz_menu",
+        description="Creates the menu for the quizzes in the current channel.",
+    )
+    @discord.app_commands.guild_only()
+    @discord.app_commands.default_permissions(administrator=True)
+    async def create_quiz_menu(self, interaction: discord.Interaction):
+        await interaction.response.send_message("Creating menu...", ephemeral=True)
+        
+        view = discord.ui.View(timeout=None)
+        view.add_item(DynamicQuizMenu(self, interaction.guild.id))
+        await interaction.channel.send(
+            "To get access to the server, take the Student quiz.", view=view
         )
-
-        await self.bot.RUN(ADD_USER_THREAD, (interaction.user.id, thread.id))
-
-        kotoba_bot_user = await interaction.guild.fetch_member(KOTOBA_BOT_ID)
-        await thread.add_user(kotoba_bot_user)
-        await thread.add_user(interaction.user)
-
-        await thread.send(f"To begin the {rank} quiz, copy and paste the following command:")
-        await thread.send(quiz_command)
-
-        await asyncio.sleep(86400)
-        await thread.delete()
-
+    
 
 async def setup(bot):
     await bot.add_cog(LevelUp(bot))
