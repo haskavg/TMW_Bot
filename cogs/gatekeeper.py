@@ -191,22 +191,23 @@ def get_next_sunday_midnight_from(dt):
     next_sunday_midnight = datetime(next_sunday.year, next_sunday.month, next_sunday.day, 0, 0, 0, tzinfo=timezone.utc)
     return next_sunday_midnight
 
+
 class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]], template=r"quizmenu-guild:(?P<guild_id>\d+)"):
     def __init__(self, levelup: "LevelUp", guild_id: int):
         self.levelup = levelup
-        self.guild_id = guild_id 
+        self.guild_id = guild_id
         rank_names = [
-                (quiz["name"], quiz["emoji"])
-                for quiz in gatekeeper_settings["rank_structure"][guild_id]
-                if quiz["command"]
+            (quiz["name"], quiz.get("emoji"))
+            for quiz in gatekeeper_settings["rank_structure"][guild_id]
+            if quiz["command"]
         ]
         super().__init__(
             discord.ui.Select(
                 custom_id=f"quizmenu-guild:{guild_id}",
-                options = [
+                options=[
                     discord.SelectOption(
                         label=name,
-                        emoji=emoji if emoji else None,
+                        emoji=emoji,
                         description=f"Select to take the {name} quiz!",
                     )
                     for name, emoji in rank_names
@@ -214,15 +215,16 @@ class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]]
                 placeholder="Click here to take a quiz!",
                 min_values=1,
                 max_values=1,
-            )       
+            )
         )
+
     @classmethod
     async def from_custom_id(cls, interaction: discord.Interaction, item, match: re.Match[str]) -> discord.ui.DynamicItem:
         guild_id = int(match.group("guild_id"))
-        levelup = interaction.client.get_cog("LevelUp") 
+        levelup = interaction.client.get_cog("LevelUp")
         if not levelup:
             raise RuntimeError("LevelUp cog is not loaded.")
-        return cls(levelup, guild_id) 
+        return cls(levelup, guild_id)
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer()
@@ -262,7 +264,8 @@ class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]]
 
         await asyncio.sleep(86400)
         await thread.delete()
-            
+
+
 class LevelUp(commands.Cog):
     def __init__(self, bot: TMWBot):
         self.bot = bot
@@ -273,7 +276,7 @@ class LevelUp(commands.Cog):
         await self.bot.RUN(CREATE_USER_THREADS_TABLE)
 
         self.bot.add_dynamic_items(DynamicQuizMenu)
-   
+
     async def is_in_levelup_channel(self, message: discord.Message):
         thread_id = await self.bot.GET_ONE(GET_USER_THREAD, (message.author.id,))
         if thread_id and message.channel.id == thread_id[0]:
@@ -418,11 +421,6 @@ class LevelUp(commands.Cog):
                 return True
         return False
 
-    async def already_passed_the_quiz(self, member: discord.Member, quiz_name: str):
-        passed_quizzes = await self.bot.GET(GET_PASSED_QUIZZES, (member.guild.id, member.id))
-        passed_quizzes = [quiz[0] for quiz in passed_quizzes]
-        return quiz_name in passed_quizzes
-
     async def get_next_attempt_time(self, guild_id: int, user_id: int, quiz_name: str) -> Optional[int]:
         """Returns the Unix timestamp of when the user can next attempt the quiz."""
         last_attempt = await self.bot.GET_ONE(GET_LAST_QUIZ_ATTEMPT, (guild_id, user_id, quiz_name))
@@ -436,6 +434,9 @@ class LevelUp(commands.Cog):
 
     @commands.Cog.listener(name="on_message")
     async def level_up_routine(self, message: discord.Message):
+        if message.author == self.bot.user:
+            return
+
         if not message.guild:
             return
 
@@ -595,12 +596,6 @@ class LevelUp(commands.Cog):
 
         await interaction.response.send_message(embed=rank_command_embed, ephemeral=True)
 
-    async def quiz_autocomplete_create(self, interaction: discord.Interaction, current_input: str):
-        guild_id = interaction.guild.id
-        rank_names = [quiz['name'] for quiz in gatekeeper_settings['rank_structure'][guild_id] if quiz['command']]
-        possible_choices = [discord.app_commands.Choice(name=rank_name, value=rank_name) for rank_name in rank_names if current_input.lower() in rank_name.lower()]
-        return possible_choices[:25]
-
     async def is_on_cooldown_create(self, member: discord.Member, quiz_name: str, rank_has_cooldown: bool):
         if not rank_has_cooldown:
             return False, None
@@ -626,13 +621,13 @@ class LevelUp(commands.Cog):
     @discord.app_commands.default_permissions(administrator=True)
     async def create_quiz_menu(self, interaction: discord.Interaction):
         await interaction.response.send_message("Creating menu...", ephemeral=True)
-        
+
         view = discord.ui.View(timeout=None)
         view.add_item(DynamicQuizMenu(self, interaction.guild.id))
         await interaction.channel.send(
             "To get access to the server, take the Student quiz.", view=view
         )
-    
+
 
 async def setup(bot):
     await bot.add_cog(LevelUp(bot))
