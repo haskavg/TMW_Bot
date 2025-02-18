@@ -448,9 +448,7 @@ rank_structure:
 
 rank_settings:
   617136488840429598: # TMW
-    valid_levelup_channels:
-      - 1027706916874506311 # quiz-rank-info
-      - 1340702372665753620
+    quiz_channel: 1027706916874506311 # quiz-rank-info
     restricted_quiz_names:
       - "jpdb1k"
       - "jpdb2_5k"
@@ -460,13 +458,9 @@ rank_settings:
       - "jpdb20k"
       - "jpdb25k"
     announce_channel: 617136489482027059
+    quiz_menu_message: "To get access to the server, pass the Student quiz!"
   1297383002610995272: # Test_Guild
-    valid_levelup_channels:
-      - 1297383004817330210 # Quiz
-      - 1297383004817330211 # Quiz-2
-      - 1297383004817330212 # Quiz-3
-      - 1297383004817330213 # Quiz-4
-      - 1297383004817330214 # Quiz-5
+    quiz_channel: 1297383004817330210 # Quiz
     restricted_quiz_names:
       - "n5"
       - "n4"
@@ -474,3 +468,4 @@ rank_settings:
       - "n2"
       - "n1"
     announce_channel: 1297383003479081019
+    quiz_menu_message: "This is a test message!"

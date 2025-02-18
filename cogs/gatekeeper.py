@@ -205,10 +205,10 @@ async def delete_inactive_threads(channel: discord.TextChannel):
         if not last_message:
             continue
 
-        if last_message.created_at < utcnow() - timedelta(minutes=60):
+        if last_message.created_at < utcnow() - timedelta(minutes=20):
             async with thread_deletion_lock:
                 await asyncio.sleep(5)
-                await thread.delete(reason="Thread inactive for over 60 minutes.")
+                await thread.delete(reason="Thread inactive for over 20 minutes.")
 
 
 class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]], template=r"quizmenu-guild:(?P<guild_id>\d+)"):
@@ -266,20 +266,29 @@ class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]]
 
         await interaction.followup.send(f"Creating your quiz thread for {rank}. Good luck!", ephemeral=True)
 
-        thread = await interaction.channel.create_thread(
-            name=f"{rank} Quiz - {interaction.user.name}"[:100],
-            auto_archive_duration=60,
-            reason='Quiz Thread'
-        )
+        quiz_thread_record = await self.levelup.bot.GET_ONE(GET_USER_THREAD, (interaction.user.id,))
+        quiz_thread = None
+        if quiz_thread_record:
+            thread_id = quiz_thread_record[0]
+            quiz_thread = interaction.guild.get_thread(thread_id)
+        if quiz_thread is None:
+            quiz_thread = await interaction.channel.create_thread(
+                name=f"{interaction.user.name} - Quiz"[:100],
+                auto_archive_duration=60,
+                reason='Quiz Thread'
+            )
+            await self.levelup.bot.RUN(ADD_USER_THREAD, (interaction.user.id, quiz_thread.id))
 
-        await self.levelup.bot.RUN(ADD_USER_THREAD, (interaction.user.id, thread.id))
+        kotoba_bot_user = interaction.guild.get_member(KOTOBA_BOT_ID)
+        if not kotoba_bot_user:
+            kotoba_bot_user = await interaction.guild.fetch_member(KOTOBA_BOT_ID)
+        if kotoba_bot_user not in quiz_thread.members:
+            await quiz_thread.add_user(kotoba_bot_user)
+        if interaction.user not in quiz_thread.members:
+            await quiz_thread.add_user(interaction.user)
 
-        kotoba_bot_user = await interaction.guild.fetch_member(KOTOBA_BOT_ID)
-        await thread.add_user(kotoba_bot_user)
-        await thread.add_user(interaction.user)
-
-        await thread.send(f"To begin the {rank} quiz, copy and paste the following command exactly:")
-        await thread.send(f"```{quiz_command}```")
+        await quiz_thread.send(f"{interaction.user.mention} To begin the {rank} quiz, copy and paste the following command exactly:")
+        await quiz_thread.send(f"```{quiz_command}```")
 
 
 class LevelUp(commands.Cog):
@@ -300,12 +309,11 @@ class LevelUp(commands.Cog):
             guild = self.bot.get_guild(guild_id)
             if not guild:
                 continue
-            quiz_channels = gatekeeper_settings['rank_settings'][guild_id]['valid_levelup_channels']
-            quiz_channels = [guild.get_channel(channel_id) for channel_id in quiz_channels]
-            for channel in quiz_channels:
-                if not channel:
-                    continue
-                await delete_inactive_threads(channel)
+            channel_id = gatekeeper_settings['rank_settings'][guild_id]['quiz_channel']
+            channel = guild.get_channel(channel_id)
+            if not channel:
+                continue
+            await delete_inactive_threads(channel)
 
     async def is_in_levelup_channel(self, message: discord.Message):
         thread_id = await self.bot.GET_ONE(GET_USER_THREAD, (message.author.id,))
@@ -654,9 +662,8 @@ class LevelUp(commands.Cog):
 
         view = discord.ui.View(timeout=None)
         view.add_item(DynamicQuizMenu(self, interaction.guild.id))
-        await interaction.channel.send(
-            "To get access to the server, take the Student quiz.", view=view
-        )
+        quiz_menu_message = gatekeeper_settings['rank_settings'][interaction.guild.id]['quiz_menu_message']
+        await interaction.channel.send(quiz_menu_message, view=view)
 
 
 async def setup(bot):
