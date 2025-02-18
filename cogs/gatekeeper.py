@@ -288,7 +288,7 @@ class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]]
             await quiz_thread.add_user(interaction.user)
 
         await quiz_thread.send(f"{interaction.user.mention} To begin the {rank} quiz, copy and paste the following command exactly:")
-        await quiz_thread.send(f"```{quiz_command}```")
+        await quiz_thread.send(f"{quiz_command}")
 
 
 class LevelUp(commands.Cog):
