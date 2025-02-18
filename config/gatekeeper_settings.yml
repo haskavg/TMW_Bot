@@ -228,13 +228,14 @@ rank_structure:
       command: "k!quiz n0+cope+kunyomi1kfull+loli+Myouji+jpdefs+places_full 50 nd hardcore dauq=1 font=7 atl=16 mmq=4 color=#f173ff size=90 effect=antiocr"
       no_timeout: false
 
-  1297383002610995272: # Test_Guild
+  1337805307908325459: # Test_Guild
     - name: "Student"
+      emoji: <:studentuchagi:1341267995787395117>
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
-      rank_to_get: 1297383002694746173
+      rank_to_get: 1341295262584274975
       foreground: "#f173ff"
       effect: null
       time_limit: 16000
@@ -243,29 +244,31 @@ rank_structure:
       deck_range:
         - 1
         - 100
-      score_limit: 1
+      score_limit: 25
       max_missed: 10
-      command: "k!quiz n5(1-100) 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 atl=16"
-      no_timeout: true
+      command: "k!quiz n5(1-100) 25 nd mmq=10 dauq=1 font=5 atl=16 color=#f173ff size=100"
+      no_timeout: false
 
     - name: "Trainee"
+      emoji: <:traineeuchagi:1341267997532094546> 
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
       font_size: 100
-      rank_to_get: 1297383002694746174
+      rank_to_get: 1341295262584274975
       foreground: "#f173ff"
       effect: null
       time_limit: 16000
       decks:
         - "n5"
       deck_range: null
-      score_limit: 1
-      max_missed: 10
-      command: "k!quiz n5 1 hardcore nd mmq=10 dauq=1 font=5 color=#f173ff size=100 atl=16"
+      score_limit: 10
+      max_missed: 5
+      command: "k!quiz n5 10 hardcore nd mmq=5 dauq=1 font=5 color=#f173ff size=100 atl=16"
       no_timeout: false
 
     - name: "Debut Idol"
+      emoji: <:debutuchagi:1341267984857169970> 
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -284,6 +287,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Major Idol"
+      emoji: <:majoruchagi:1341267992142549012> 
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -302,6 +306,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Prima Idol Vocab"
+      emoji: <:primauchagi:1341267993807818865> 
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -320,6 +325,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Divine Idol Vocab"
+      emoji: <:divineuchagi:1341267986488492213> 
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -338,6 +344,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Eternal Idol Vocab"
+      emoji: <:eternaluchagi:1341267988032126986> 
       require_role: null
       combination_rank: false
       font: "Eishiikaisho"
@@ -356,6 +363,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN2"
+      emoji: <:primauchagi:1341267993807818865> 
       require_role: null
       combination_rank: false
       font: null
@@ -373,6 +381,7 @@ rank_structure:
       no_timeout: false
 
     - name: "GN1"
+      emoji: <:divineuchagi:1341267986488492213> 
       require_role: null
       combination_rank: false
       font: null
@@ -417,6 +426,7 @@ rank_structure:
       no_timeout: false
 
     - name: "Immortal Idol"
+      emoji: <:immortaluchagi:1341267989827289128> 
       require_role: 1297383002694746179
       combination_rank: false
       font: "Eishiikaisho"
@@ -452,17 +462,13 @@ rank_settings:
       - "jpdb20k"
       - "jpdb25k"
     announce_channel: 617136489482027059
-  1297383002610995272: # Test_Guild
+  1337805307908325459: # haska test
     valid_levelup_channels:
-      - 1297383004817330210 # Quiz
-      - 1297383004817330211 # Quiz-2
-      - 1297383004817330212 # Quiz-3
-      - 1297383004817330213 # Quiz-4
-      - 1297383004817330214 # Quiz-5
+      - 1341248485881806869 # quiz
     restricted_quiz_names:
       - "n5"
       - "n4"
       - "n3"
       - "n2"
       - "n1"
-    announce_channel: 1297383003479081019
+    announce_channel: 1341072002336821268
