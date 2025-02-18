@@ -449,11 +449,8 @@ rank_structure:
 rank_settings:
   617136488840429598: # TMW
     valid_levelup_channels:
+      - 1027706916874506311 # quiz-rank-info
       - 1340702372665753620
-      - 1340702385659576391
-      - 1340702396786933812
-      - 1340702424041787414
-      - 1340702437345984572
     restricted_quiz_names:
       - "jpdb1k"
       - "jpdb2_5k"

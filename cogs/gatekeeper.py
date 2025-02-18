@@ -7,7 +7,7 @@ import yaml
 import os
 from typing import Optional
 from datetime import datetime, timedelta, timezone
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.utils import utcnow
 
 
@@ -165,6 +165,7 @@ async def get_quiz_id(message: discord.Message):
 
 
 kotoba_request_lock = asyncio.Lock()
+thread_deletion_lock = asyncio.Lock()
 
 
 async def extract_quiz_result_from_id(quiz_id):
@@ -190,6 +191,24 @@ def get_next_sunday_midnight_from(dt):
     next_sunday = dt + timedelta(days=days_until_sunday)
     next_sunday_midnight = datetime(next_sunday.year, next_sunday.month, next_sunday.day, 0, 0, 0, tzinfo=timezone.utc)
     return next_sunday_midnight
+
+
+async def delete_inactive_threads(channel: discord.TextChannel):
+    for thread in channel.threads:
+        last_message = thread.last_message
+        if not last_message:
+            last_message_id = thread.last_message_id
+            async with thread_deletion_lock:
+                await asyncio.sleep(1)
+                last_message = await thread.fetch_message(last_message_id)
+
+        if not last_message:
+            continue
+
+        if last_message.created_at < utcnow() - timedelta(minutes=60):
+            async with thread_deletion_lock:
+                await asyncio.sleep(5)
+                await thread.delete(reason="Thread inactive for over 60 minutes.")
 
 
 class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]], template=r"quizmenu-guild:(?P<guild_id>\d+)"):
@@ -262,9 +281,6 @@ class DynamicQuizMenu(discord.ui.DynamicItem[discord.ui.Select[discord.ui.View]]
         await thread.send(f"To begin the {rank} quiz, copy and paste the following command exactly:")
         await thread.send(f"```{quiz_command}```")
 
-        await asyncio.sleep(86400)
-        await thread.delete()
-
 
 class LevelUp(commands.Cog):
     def __init__(self, bot: TMWBot):
@@ -276,6 +292,20 @@ class LevelUp(commands.Cog):
         await self.bot.RUN(CREATE_USER_THREADS_TABLE)
 
         self.bot.add_dynamic_items(DynamicQuizMenu)
+        self.inactive_quiz_thread_deleter.start()
+
+    @tasks.loop(minutes=1)
+    async def inactive_quiz_thread_deleter(self):
+        for guild_id in gatekeeper_settings['rank_settings']:
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                continue
+            quiz_channels = gatekeeper_settings['rank_settings'][guild_id]['valid_levelup_channels']
+            quiz_channels = [guild.get_channel(channel_id) for channel_id in quiz_channels]
+            for channel in quiz_channels:
+                if not channel:
+                    continue
+                await delete_inactive_threads(channel)
 
     async def is_in_levelup_channel(self, message: discord.Message):
         thread_id = await self.bot.GET_ONE(GET_USER_THREAD, (message.author.id,))
